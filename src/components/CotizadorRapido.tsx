@@ -60,63 +60,99 @@ export default function CotizadorRapido() {
     const generarPDF = () => {
         try {
             const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.width;
 
-            // Título
-            doc.setFontSize(18);
-            doc.setFont('helvetica', 'bold');
-            doc.text('PRESUPUESTO - NEUMÁTICOS BONAVIA', 105, 20, { align: 'center' });
+            // --- 1. ENCABEZADO (Header Comercial) ---
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(40, 40, 40);
+            doc.text("NEUMÁTICOS BONAVIA", 14, 25);
 
             doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            const fecha = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            doc.text(`Fecha: ${fecha}`, 190, 30, { align: 'right' });
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(100, 100, 100);
+            doc.text("Cerro Payun 769 - Villa Allende, Córdoba", 14, 32);
+            doc.text("Teléfono: 351-XXXXXXX | CUIT: 30-56626254-8", 14, 37);
 
+            // --- 2. DATOS DEL PRESUPUESTO (Derecha) ---
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(0, 0, 0);
+            const fechaActual = new Date().toLocaleDateString('es-AR');
+            doc.text("PRESUPUESTO", pageWidth - 14, 25, { align: "right" });
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Fecha: ${fechaActual}`, pageWidth - 14, 32, { align: "right" });
+            doc.text(`Validez: 5 Días`, pageWidth - 14, 37, { align: "right" });
+
+            // Línea separadora
+            doc.setDrawColor(200, 200, 200);
+            doc.line(14, 42, pageWidth - 14, 42);
+
+            // --- 3. DATOS DEL CLIENTE (Espacio para rellenar) ---
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text("Cliente / Taller:", 14, 52);
+            doc.setDrawColor(150, 150, 150);
+            doc.line(45, 52, 120, 52); // Línea para escribir el nombre a mano o luego automatizar
+
+            // --- 4. PREPARAR DATOS DE LA TABLA ---
             const seleccionados = resultados.map((r, idx) => ({ ...r, idx })).filter(r => selecciones[r.idx]?.seleccionado);
             if (seleccionados.length === 0) {
                 alert("Selecciona al menos un producto para el PDF.");
                 return;
             }
 
-            let totalGeneral = 0;
-            const tableData = seleccionados.map(item => {
-                const cantidad = selecciones[item.idx].cantidad;
-                const subtotal = item.venta * cantidad;
-                totalGeneral += subtotal;
-
+            let totalPresupuesto = 0;
+            const tableData = seleccionados.map((item) => {
+                const cant = selecciones[item.idx].cantidad || 4;
+                const subtotal = item.venta * cant;
+                totalPresupuesto += subtotal;
                 return [
-                    item.titulo,
-                    cantidad.toString(),
+                    item.titulo || "Neumático",
+                    cant.toString(),
                     `$${Math.round(item.venta).toLocaleString('es-AR')}`,
                     `$${Math.round(subtotal).toLocaleString('es-AR')}`
                 ];
             });
 
-            // Generar tabla
+            // --- 5. GENERAR TABLA (Estilo Premium) ---
             autoTable(doc, {
-                startY: 40,
-                head: [['Descripción', 'Cantidad', 'Precio Unitario', 'Subtotal']],
+                startY: 65,
+                head: [['Descripción del Producto', 'Cantidad', 'Precio Unitario', 'Subtotal']],
                 body: tableData,
                 theme: 'grid',
-                headStyles: { fillColor: [40, 40, 40], textColor: 255, halign: 'center' },
-                bodyStyles: { halign: 'center' },
-                columnStyles: { 0: { halign: 'left' } }
+                headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: 'bold' },
+                styles: { fontSize: 10, cellPadding: 5 },
+                columnStyles: {
+                    0: { halign: 'left', cellWidth: 'auto' },
+                    1: { halign: 'center', cellWidth: 25 },
+                    2: { halign: 'right', cellWidth: 35 },
+                    3: { halign: 'right', cellWidth: 35 },
+                },
             });
 
-            const finalY = (doc as any).lastAutoTable?.finalY || 40;
+            // --- 6. TOTALES Y CONDICIONES (Pie de tabla) ---
+            const finalY = (doc as any).lastAutoTable?.finalY || 65;
 
             doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`TOTAL DEL PRESUPUESTO: $${Math.round(totalGeneral).toLocaleString('es-AR')}`, 190, finalY + 15, { align: 'right' });
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(0, 0, 0);
+            doc.text(`TOTAL: $${Math.round(totalPresupuesto).toLocaleString('es-AR')}`, pageWidth - 14, finalY + 15, { align: "right" });
 
+            // Condiciones comerciales
             doc.setFontSize(9);
-            doc.setFont('helvetica', 'italic');
-            doc.text('Nota: Precios de contado/transferencia.', 15, finalY + 30);
-            doc.text('Validez del presupuesto: 24 hs.', 15, finalY + 35);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(100, 100, 100);
+            doc.text("Condiciones Comerciales:", 14, finalY + 25);
+            doc.text("- Los precios expresados son de contado/transferencia.", 14, finalY + 30);
+            doc.text("- Sujeto a disponibilidad de stock al momento de confirmar la compra.", 14, finalY + 35);
 
-            doc.save('Presupuesto_Bonavia.pdf');
+            // --- 7. GUARDAR ---
+            doc.save(`Presupuesto_Bonavia_${fechaActual.replace(/\//g, '-')}.pdf`);
         } catch (error) {
             console.error("Error generando PDF:", error);
-            alert("Hubo un error al generar el PDF.");
+            alert("Hubo un error al generar el documento.");
         }
     };
 
