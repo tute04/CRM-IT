@@ -1,9 +1,10 @@
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Configurar el worker de pdf.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
 export const extractTextFromPDF = async (file: File): Promise<string> => {
+    // Importación dinámica para prevenir errores ReferenceError (DOMMatrix) en SSR Next.js
+    const pdfjsLib = await import('pdfjs-dist');
+
+    // Configurar el worker de pdf.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     let fullText = '';

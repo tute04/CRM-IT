@@ -1,9 +1,5 @@
 'use client';
 import React, { useState } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-
-import 'jspdf-autotable';
 import { Cliente } from '@/types';
 
 interface Cotizacion {
@@ -65,8 +61,11 @@ export default function CotizadorRapido({ clientes = [] }: Props) {
         });
     };
 
-    const generarPDF = () => {
+    const generarPDF = async () => {
         try {
+            const { default: jsPDF } = await import('jspdf');
+            const { default: autoTable } = await import('jspdf-autotable');
+
             const doc = new jsPDF();
             const pageWidth = doc.internal.pageSize.width;
 
