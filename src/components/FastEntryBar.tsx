@@ -137,7 +137,7 @@ export default function FastEntryBar({ clientes, ventas, onAddData, onAddServici
                             <button onClick={() => setDropzoneModalOpen(false)} className="text-neutral-400 hover:text-yellow-400 font-bold text-2xl transition-colors duration-300 ease-out leading-none">&times;</button>
                         </div>
                         <div className="p-8">
-                            <InvoiceDropzone onExtracted={handleExtracted} />
+                            <InvoiceDropzone onExtracted={handleExtracted} clientes={clientes} />
                         </div>
                     </div>
                 </div>

@@ -2,12 +2,14 @@
 
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { extractTextFromPDF, parseAfipInvoice } from '../utils/pdfExtractor';
 
 interface Props {
     onExtracted: (data: any) => void;
+    clientes?: any[];
 }
 
-export default function InvoiceDropzone({ onExtracted }: Props) {
+export default function InvoiceDropzone({ onExtracted, clientes = [] }: Props) {
     const [isProcessing, setIsProcessing] = useState(false);
 
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -15,21 +17,36 @@ export default function InvoiceDropzone({ onExtracted }: Props) {
         if (!file) return;
 
         setIsProcessing(true);
-        const formData = new FormData();
-        formData.append('file', file);
 
         try {
-            const res = await fetch('/api/extract-invoice', { method: 'POST', body: formData });
-            if (!res.ok) throw new Error("Error en extracción");
-            const data = await res.json();
-            onExtracted(data);
+            if (file.type === 'application/pdf') {
+                const text = await extractTextFromPDF(file);
+                const extractedData = parseAfipInvoice(text);
+
+                let foundClient = clientes.find(c => c.telefono === extractedData.cuitCliente || c.cuit === extractedData.cuitCliente || (extractedData.cuitCliente && c.nombre.includes(extractedData.cuitCliente)));
+
+                onExtracted({
+                    nombre_cliente: foundClient ? foundClient.nombre : (extractedData.cuitCliente || ''),
+                    telefono: foundClient ? foundClient.telefono : (extractedData.cuitCliente || ''),
+                    monto: extractedData.total,
+                    detalle: extractedData.fecha ? `Venta de Fecha ${extractedData.fecha}` : 'Venta Registrada (Remito)',
+                });
+            } else {
+                // Si es imagen en un futuro, se enviaría por formData a extract-invoice API
+                const formData = new FormData();
+                formData.append('file', file);
+                const res = await fetch('/api/extract-invoice', { method: 'POST', body: formData });
+                if (!res.ok) throw new Error("Error en extracción");
+                const data = await res.json();
+                onExtracted(data);
+            }
         } catch (err) {
             console.error(err);
-            alert("Error al extraer datos de la factura.");
+            alert("Error al procesar la factura.");
         } finally {
             setIsProcessing(false);
         }
-    }, [onExtracted]);
+    }, [onExtracted, clientes]);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
@@ -45,8 +62,8 @@ export default function InvoiceDropzone({ onExtracted }: Props) {
         <div
             {...getRootProps()}
             className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors duration-300 flex flex-col items-center justify-center ${isDragActive
-                    ? 'border-yellow-400 bg-neutral-800'
-                    : 'border-neutral-700 hover:border-yellow-400 hover:bg-neutral-800/50'
+                ? 'border-yellow-400 bg-neutral-800'
+                : 'border-neutral-700 hover:border-yellow-400 hover:bg-neutral-800/50'
                 } ${isProcessing ? 'pointer-events-none opacity-80' : ''}`}
         >
             <input {...getInputProps()} />
