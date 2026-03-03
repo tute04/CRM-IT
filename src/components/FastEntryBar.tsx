@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import FastEntryModal from './FastEntryModal';
+import InvoiceDropzone from './InvoiceDropzone';
 import { Cliente, Venta } from '@/types';
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
 
 export default function FastEntryBar({ clientes, ventas, onAddData, onAddServicio, isDarkMode, setIsDarkMode, searchTerm, setSearchTerm }: Props) {
     const [modalOpen, setModalOpen] = useState(false);
+    const [dropzoneModalOpen, setDropzoneModalOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const suggestions = React.useMemo(() => {
@@ -45,31 +47,12 @@ export default function FastEntryBar({ clientes, ventas, onAddData, onAddServici
         setIsDropdownOpen(false);
     };
 
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const [isUploadingExt, setIsUploadingExt] = useState(false);
     const [extractedData, setExtractedData] = useState<any>(null);
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploadingExt(true);
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            const res = await fetch('/api/extract-invoice', { method: 'POST', body: formData });
-            if (!res.ok) throw new Error("Error en extracción");
-            const data = await res.json();
-            setExtractedData(data); // Set data and map it inside FastEntryModal 
-            setModalOpen(true);
-        } catch (err) {
-            console.error(err);
-            alert("Error al extraer datos de la factura.");
-        } finally {
-            setIsUploadingExt(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
-        }
+    const handleExtracted = (data: any) => {
+        setExtractedData(data);
+        setDropzoneModalOpen(false);
+        setModalOpen(true);
     };
 
     return (
@@ -113,19 +96,12 @@ export default function FastEntryBar({ clientes, ventas, onAddData, onAddServici
                             </ul>
                         )}
                     </div>
-                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/pdf" onChange={handleFileUpload} />
                     <button
                         type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploadingExt}
-                        className={`border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black font-black px-6 py-2 rounded-lg shadow-lg transition-colors uppercase tracking-wide whitespace-nowrap flex items-center justify-center min-w-[180px] ${isUploadingExt ? 'opacity-70 cursor-wait' : ''}`}
+                        onClick={() => setDropzoneModalOpen(true)}
+                        className={`border border-yellow-400 text-yellow-500 hover:bg-yellow-400 hover:text-black font-black px-6 py-2 rounded-lg shadow-lg transition-colors uppercase tracking-wide whitespace-nowrap flex items-center justify-center min-w-[180px]`}
                     >
-                        {isUploadingExt ? (
-                            <>
-                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                <span className="text-yellow-400 group-hover:text-black">🪄 Analizando...</span>
-                            </>
-                        ) : '📥 Subir Factura'}
+                        📥 Subir Factura
                     </button>
                     <button
                         type="button"
@@ -150,6 +126,22 @@ export default function FastEntryBar({ clientes, ventas, onAddData, onAddServici
                 onAddVenta={onAddServicio}
                 initialScanData={extractedData}
             />
+
+            {dropzoneModalOpen && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 transition-all duration-300">
+                    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col transition-colors duration-300">
+                        <div className="bg-neutral-950 p-5 flex justify-between items-center border-b border-neutral-800 transition-colors duration-300">
+                            <h3 className="text-white font-bold text-lg tracking-wide uppercase flex items-center gap-2">
+                                <span className="text-2xl">🪄</span> Carga de Recibo Mágica
+                            </h3>
+                            <button onClick={() => setDropzoneModalOpen(false)} className="text-neutral-400 hover:text-yellow-400 font-bold text-2xl transition-colors duration-300 ease-out leading-none">&times;</button>
+                        </div>
+                        <div className="p-8">
+                            <InvoiceDropzone onExtracted={handleExtracted} />
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
