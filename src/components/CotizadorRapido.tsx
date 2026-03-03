@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+import 'jspdf-autotable';
+import { Cliente } from '@/types';
+
 interface Cotizacion {
     titulo: string;
     costo: number;
@@ -11,12 +14,17 @@ interface Cotizacion {
     link: string;
 }
 
-export default function CotizadorRapido() {
+interface Props {
+    clientes?: Cliente[]; // Make it optional for fallback protection
+}
+
+export default function CotizadorRapido({ clientes = [] }: Props) {
     const [medida, setMedida] = useState('');
     const [loading, setLoading] = useState(false);
     const [resultados, setResultados] = useState<Cotizacion[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [selecciones, setSelecciones] = useState<Record<number, { seleccionado: boolean; cantidad: number }>>({});
+    const [clientePDF, setClientePDF] = useState<Cliente | null>(null);
 
     const cotizar = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -89,12 +97,24 @@ export default function CotizadorRapido() {
             doc.setDrawColor(200, 200, 200);
             doc.line(14, 42, pageWidth - 14, 42);
 
-            // --- 3. DATOS DEL CLIENTE (Espacio para rellenar) ---
+            // --- 3. DATOS DEL CLIENTE (Dinámico) ---
             doc.setFontSize(11);
             doc.setFont("helvetica", "bold");
-            doc.text("Cliente / Taller:", 14, 52);
-            doc.setDrawColor(150, 150, 150);
-            doc.line(45, 52, 120, 52); // Línea para escribir el nombre a mano o luego automatizar
+
+            if (clientePDF) {
+                // Si seleccionó un cliente de la base de datos
+                doc.text(`Cliente / Taller: ${clientePDF.nombre || ''}`, 14, 52);
+                doc.setFont("helvetica", "normal");
+                doc.text(`Contacto / Tel: ${clientePDF.telefono || 'No registrado'}`, 14, 57);
+            } else {
+                // Si lo dejó en blanco (Consumidor Final)
+                doc.text("Cliente / Taller:", 14, 52);
+                doc.setDrawColor(150, 150, 150);
+                doc.line(45, 52, 130, 52); // Línea para escribir a mano
+                doc.setFont("helvetica", "normal");
+                doc.text("CUIT / DNI:", 14, 60);
+                doc.line(35, 60, 80, 60);
+            }
 
             // --- 4. PREPARAR DATOS DE LA TABLA ---
             const seleccionados = resultados.map((r, idx) => ({ ...r, idx })).filter(r => selecciones[r.idx]?.seleccionado);
@@ -118,7 +138,7 @@ export default function CotizadorRapido() {
 
             // --- 5. GENERAR TABLA (Estilo Premium) ---
             autoTable(doc, {
-                startY: 65,
+                startY: 70,
                 head: [['Descripción del Producto', 'Cantidad', 'Precio Unitario', 'Subtotal']],
                 body: tableData,
                 theme: 'grid',
@@ -133,7 +153,7 @@ export default function CotizadorRapido() {
             });
 
             // --- 6. TOTALES Y CONDICIONES (Pie de tabla) ---
-            const finalY = (doc as any).lastAutoTable?.finalY || 65;
+            const finalY = (doc as any).lastAutoTable?.finalY || 70;
 
             doc.setFontSize(14);
             doc.setFont("helvetica", "bold");
@@ -233,6 +253,28 @@ export default function CotizadorRapido() {
                     ))}
 
                     <div className="flex flex-col gap-3 mt-6">
+                        <div className="flex flex-col gap-1 mb-2">
+                            <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest pl-1">Asignar Cliente al PDF</label>
+                            <select
+                                onChange={(e) => {
+                                    const selectedId = e.target.value;
+                                    if (!selectedId) {
+                                        setClientePDF(null);
+                                    } else {
+                                        const found = clientes.find(c => c.id === selectedId);
+                                        setClientePDF(found || null);
+                                    }
+                                }}
+                                className="bg-neutral-900 border border-neutral-700 text-white p-3 rounded-lg w-full focus:ring-1 focus:ring-yellow-400 focus:outline-none transition-colors duration-300"
+                            >
+                                <option value="">👤 Cliente ocasional / Consumidor Final (Dejar en blanco)</option>
+                                {clientes.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.nombre} - {c.telefono}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                         <button
                             onClick={generarPDF}
                             disabled={!Object.values(selecciones).some(s => s.seleccionado)}

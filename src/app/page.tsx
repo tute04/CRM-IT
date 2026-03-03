@@ -197,7 +197,7 @@ export default function Home() {
                 <DashboardStats />
               </div>
               <div className="lg:col-span-1">
-                <CotizadorRapido />
+                <CotizadorRapido clientes={clientes} />
               </div>
             </div>
           )}
