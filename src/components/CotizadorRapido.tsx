@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 interface Cotizacion {
     titulo: string;
@@ -58,60 +58,66 @@ export default function CotizadorRapido() {
     };
 
     const generarPDF = () => {
-        const seleccionados = resultados.map((r, idx) => ({ ...r, idx })).filter(r => selecciones[r.idx]?.seleccionado);
-        if (seleccionados.length === 0) return;
+        try {
+            const doc = new jsPDF();
 
-        const doc = new jsPDF() as any;
+            // Título
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text('PRESUPUESTO - NEUMÁTICOS BONAVIA', 105, 20, { align: 'center' });
 
-        doc.setFontSize(18);
-        doc.setFont('helvetica', 'bold');
-        doc.text('PRESUPUESTO - NEUMÁTICOS BONAVIA', 105, 20, { align: 'center' });
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            const fecha = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            doc.text(`Fecha: ${fecha}`, 190, 30, { align: 'right' });
 
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        const fecha = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        doc.text(`Fecha: ${fecha}`, 190, 30, { align: 'right' });
+            const seleccionados = resultados.map((r, idx) => ({ ...r, idx })).filter(r => selecciones[r.idx]?.seleccionado);
+            if (seleccionados.length === 0) {
+                alert("Selecciona al menos un producto para el PDF.");
+                return;
+            }
 
-        const tableColumn = ['Descripción', 'Cantidad', 'Precio Unitario', 'Subtotal'];
-        const tableRows: any[] = [];
-        let totalGeneral = 0;
+            let totalGeneral = 0;
+            const tableData = seleccionados.map(item => {
+                const cantidad = selecciones[item.idx].cantidad;
+                const subtotal = item.venta * cantidad;
+                totalGeneral += subtotal;
 
-        seleccionados.forEach(item => {
-            const cantidad = selecciones[item.idx].cantidad;
-            const subtotal = item.venta * cantidad;
-            totalGeneral += subtotal;
+                return [
+                    item.titulo,
+                    cantidad.toString(),
+                    `$${Math.round(item.venta).toLocaleString('es-AR')}`,
+                    `$${Math.round(subtotal).toLocaleString('es-AR')}`
+                ];
+            });
 
-            const itemData = [
-                item.titulo,
-                cantidad.toString(),
-                `$${Math.round(item.venta).toLocaleString('es-AR')}`,
-                `$${Math.round(subtotal).toLocaleString('es-AR')}`
-            ];
-            tableRows.push(itemData);
-        });
+            // Generar tabla
+            autoTable(doc, {
+                startY: 40,
+                head: [['Descripción', 'Cantidad', 'Precio Unitario', 'Subtotal']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: { fillColor: [40, 40, 40], textColor: 255, halign: 'center' },
+                bodyStyles: { halign: 'center' },
+                columnStyles: { 0: { halign: 'left' } }
+            });
 
-        doc.autoTable({
-            startY: 40,
-            head: [tableColumn],
-            body: tableRows,
-            theme: 'grid',
-            headStyles: { fillColor: [40, 40, 40], textColor: 255, halign: 'center' },
-            bodyStyles: { halign: 'center' },
-            columnStyles: { 0: { halign: 'left' } }
-        });
+            const finalY = (doc as any).lastAutoTable?.finalY || 40;
 
-        const finalY = doc.lastAutoTable.finalY || 40;
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`TOTAL DEL PRESUPUESTO: $${Math.round(totalGeneral).toLocaleString('es-AR')}`, 190, finalY + 15, { align: 'right' });
 
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`TOTAL DEL PRESUPUESTO: $${Math.round(totalGeneral).toLocaleString('es-AR')}`, 190, finalY + 15, { align: 'right' });
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'italic');
+            doc.text('Nota: Precios de contado/transferencia.', 15, finalY + 30);
+            doc.text('Validez del presupuesto: 24 hs.', 15, finalY + 35);
 
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'italic');
-        doc.text('Nota: Precios de contado/transferencia.', 15, finalY + 30);
-        doc.text('Validez del presupuesto: 24 hs.', 15, finalY + 35);
-
-        doc.save('Presupuesto_Bonavia.pdf');
+            doc.save('Presupuesto_Bonavia.pdf');
+        } catch (error) {
+            console.error("Error generando PDF:", error);
+            alert("Hubo un error al generar el PDF.");
+        }
     };
 
     return (
