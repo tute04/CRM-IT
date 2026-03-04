@@ -1,44 +1,58 @@
 import { NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
+// Requires para compatibilidad con commonjs y next.js
+const pdfParse = require('pdf-parse');
+
+export async function POST(req: Request) {
     try {
-        const formData = await request.formData();
-        const file = formData.get('file');
+        const data = await req.formData();
+        const file: File | null = data.get('file') as unknown as File;
 
         if (!file) {
-            return NextResponse.json({ error: 'No se envió ningún archivo.' }, { status: 400 });
+            return NextResponse.json({ error: 'No se recibió ningún archivo' }, { status: 400 });
         }
 
-        // =========================================================================
-        // ⚠️ ATENCIÓN DESARROLLADOR: CONECTAR AQUÍ API DE VISION / OCR ⚠️
-        // =========================================================================
-        // Actualmente esto es un MOCK (Simulación) para UX. 
-        // 
-        // Pasos para implementar en Producción:
-        // 1. Obtener la API Key de OpenAI (o AWS Textract / Google Cloud Vision).
-        // 2. Convertir el 'file' (File o Blob) a un Buffer o Base64.
-        // 3. Enviar este Base64 al modelo gpt-4o de OpenAI pasándole un prompt como:
-        //    "Extrae de esta factura: nombre del cliente, teléfono, detalle de los ítems, monto total."
-        // 4. Parsear el resultado en JSON estructurado.
-        // =========================================================================
+        if (file.type !== 'application/pdf') {
+            return NextResponse.json({ error: 'El archivo debe ser un PDF' }, { status: 400 });
+        }
 
-        // Simulamos un retraso de procesamiento para testear UX
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
 
-        // Respuesta simulada (MOCK)
-        const extractedData = {
-            nombre_cliente: "Transportes Ejemplo",
-            telefono: "1155667788",
-            detalle: "Extracción automática de factura",
-            monto: 150000,
-            fecha: "2026-03-03",
-            vendedor: "Sistema"
-        };
+        const pdfData = await pdfParse(buffer);
+        const text = pdfData.text;
 
-        return NextResponse.json(extractedData);
+        // --- Extracción con Regex ---
 
-    } catch (error: any) {
-        console.error("Error en extracción:", error);
-        return NextResponse.json({ error: error.message || 'Error interno al procesar factura.' }, { status: 500 });
+        // 1. Cliente: Apellido y Nombre / Razón Social: 
+        const clienteMatch = text.match(/Apellido y Nombre \/ Razón Social:\s*(.+)/);
+        const nombre_cliente = clienteMatch ? clienteMatch[1].trim() : '';
+
+        // 2. Fecha: Fecha de Emisión: DD/MM/YYYY -> Formato para input type="date" YYYY-MM-DD
+        const fechaMatch = text.match(/Fecha de Emisión:\s*(\d{2}\/\d{2}\/\d{4})/);
+        let fechaFormatada = '';
+        if (fechaMatch) {
+            const [dia, mes, anio] = fechaMatch[1].split('/');
+            fechaFormatada = `${anio}-${mes}-${dia}`;
+        }
+
+        // 3. Monto Total: Importe Total: $ 123.456,78
+        const montoMatch = text.match(/Importe Total:(?:\s*\n*\s*)\$?\s*([\d,\.]+)/);
+        let monto = 0;
+        if (montoMatch) {
+            monto = parseFloat(montoMatch[1].replace(/\./g, '').replace(',', '.'));
+        }
+
+        return NextResponse.json({
+            nombre_cliente,
+            telefono: "",
+            detalle: "Extracción automática PDF AFIP",
+            monto,
+            fecha: fechaFormatada
+        });
+
+    } catch (error) {
+        console.error("Error al procesar el PDF:", error);
+        return NextResponse.json({ error: 'No se pudo leer el PDF' }, { status: 500 });
     }
 }
