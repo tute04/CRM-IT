@@ -54,8 +54,10 @@ export default function FastEntryModal({ clienteSearchTerm, isOpen, onClose, cli
                 setMonto(initialScanData.monto ? initialScanData.monto.toString() : '');
                 setVendedor(initialScanData.vendedor || '');
 
-                // Forzamos modo creación para que el humano valide el texto OCR y guarde.
+                // Forzamos la sobreescritura limpia del estado aislando la data inicial del OCR
                 setSelectedCliente(null);
+                setSearchTerm(initialScanData.nombre_cliente?.trim() || '');
+                setCelular(initialScanData.telefono?.trim() || '');
                 setIsCreatingNew(true);
             } else {
                 setSearchTerm(clienteSearchTerm);
@@ -209,6 +211,8 @@ export default function FastEntryModal({ clienteSearchTerm, isOpen, onClose, cli
                             <div className="relative">
                                 <input
                                     type="text"
+                                    name="search-client-random"
+                                    autoComplete="off"
                                     value={searchTerm}
                                     onChange={e => {
                                         setSearchTerm(e.target.value);
@@ -246,6 +250,8 @@ export default function FastEntryModal({ clienteSearchTerm, isOpen, onClose, cli
                                 <div className="relative">
                                     <input
                                         type="text"
+                                        name="selected-client-random"
+                                        autoComplete="off"
                                         value={searchTerm}
                                         readOnly
                                         className={`w-full px-4 py-3 border rounded-xl font-bold cursor-not-allowed transition-all shadow-sm pr-12 ${isCreatingNew ? 'bg-yellow-50 dark:bg-yellow-400/10 border-yellow-200 dark:border-yellow-500/30 text-yellow-800 dark:text-yellow-400' : 'bg-gray-100 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-300'}`}
@@ -265,6 +271,8 @@ export default function FastEntryModal({ clienteSearchTerm, isOpen, onClose, cli
                                 <div>
                                     <input
                                         type="tel"
+                                        name="client-phone-random"
+                                        autoComplete="new-password"
                                         required
                                         value={celular}
                                         onChange={e => setCelular(e.target.value)}

@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { extractTextFromPDF, parseAfipInvoice } from '../utils/pdfExtractor';
 
 interface Props {
     onExtracted: (data: any) => void;
@@ -19,27 +18,27 @@ export default function InvoiceDropzone({ onExtracted, clientes = [] }: Props) {
         setIsProcessing(true);
 
         try {
-            if (file.type === 'application/pdf') {
-                const text = await extractTextFromPDF(file);
-                const extractedData = parseAfipInvoice(text);
+            const formData = new FormData();
+            formData.append('file', file);
 
-                let foundClient = clientes.find(c => c.telefono === extractedData.cuitCliente || c.cuit === extractedData.cuitCliente || (extractedData.cuitCliente && c.nombre.includes(extractedData.cuitCliente)));
+            const res = await fetch('/api/extract-invoice', {
+                method: 'POST',
+                body: formData
+            });
 
-                onExtracted({
-                    nombre_cliente: foundClient ? foundClient.nombre : (extractedData.cuitCliente || ''),
-                    telefono: foundClient ? foundClient.telefono : (extractedData.cuitCliente || ''),
-                    monto: extractedData.total,
-                    detalle: extractedData.fecha ? `Venta de Fecha ${extractedData.fecha}` : 'Venta Registrada (Remito)',
-                });
-            } else {
-                // Si es imagen en un futuro, se enviaría por formData a extract-invoice API
-                const formData = new FormData();
-                formData.append('file', file);
-                const res = await fetch('/api/extract-invoice', { method: 'POST', body: formData });
-                if (!res.ok) throw new Error("Error en extracción");
-                const data = await res.json();
-                onExtracted(data);
-            }
+            if (!res.ok) throw new Error("Error en extracción");
+
+            const extractedData = await res.json();
+
+            // Reconciliar con DB en el cliente
+            let foundClient = clientes.find(c => c.nombre.toLowerCase().includes(extractedData.nombre_cliente?.toLowerCase()) || (extractedData.cuitCliente && c.telefono === extractedData.cuitCliente));
+
+            onExtracted({
+                nombre_cliente: foundClient ? foundClient.nombre : (extractedData.nombre_cliente || ''),
+                telefono: foundClient ? foundClient.telefono : (extractedData.cuitCliente || ''),
+                monto: extractedData.monto,
+                detalle: extractedData.fecha ? `Venta de Fecha ${extractedData.fecha}` : 'Venta Registrada (Remito)',
+            });
         } catch (err) {
             console.error(err);
             alert("Error al procesar la factura.");
