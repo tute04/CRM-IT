@@ -119,6 +119,9 @@ export default function Home() {
   const facturadoActual = timeFilter === 'SEMANA' ? totalFacturadoSemana : totalFacturadoMes;
   const cantidadVentasActual = timeFilter === 'SEMANA' ? ventasSemana.length : ventasMes.length;
 
+  // Ticket promedio
+  const ticketPromedio = cantidadVentasActual > 0 ? Math.round(facturadoActual / cantidadVentasActual) : 0;
+
   return (
     <div className={isDarkMode ? 'dark' : ''}>
       <main className="min-h-screen bg-gray-50 dark:bg-neutral-950 flex flex-col transition-colors duration-300">
@@ -133,57 +136,95 @@ export default function Home() {
           setSearchTerm={setSearchTerm}
         />
 
-        {/* Pestañas de Navegación */}
-        <div className="w-full bg-white dark:bg-neutral-900 shadow-sm px-6 flex gap-4 justify-center border-b border-gray-200 dark:border-neutral-800 transition-colors duration-300">
+        {/* Pestañas de Navegación con Iconos */}
+        <div className="w-full bg-white dark:bg-neutral-900 shadow-sm px-6 flex gap-1 justify-center border-b border-gray-200 dark:border-neutral-800 transition-colors duration-300">
           <button
             onClick={() => setTab('OPERATIVO')}
-            className={`px-6 py-4 font-bold uppercase tracking-wide transition-colors border-b-4 ${tab === 'OPERATIVO' ? 'border-yellow-400 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-200 dark:hover:border-neutral-800'}`}
+            className={`flex items-center gap-2 px-6 py-4 font-bold uppercase tracking-wide transition-all border-b-4 ${tab === 'OPERATIVO' ? 'border-yellow-400 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-neutral-700'}`}
           >
-            Panel de Ventas
+            <span className="text-lg">📊</span> Panel de Ventas
           </button>
           <button
             onClick={() => setTab('DIRECTORIO')}
-            className={`px-6 py-4 font-bold uppercase tracking-wide transition-colors border-b-4 ${tab === 'DIRECTORIO' ? 'border-yellow-400 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-200 dark:hover:border-neutral-800'}`}
+            className={`flex items-center gap-2 px-6 py-4 font-bold uppercase tracking-wide transition-all border-b-4 ${tab === 'DIRECTORIO' ? 'border-yellow-400 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-neutral-700'}`}
           >
-            Directorio Clientes
+            <span className="text-lg">👥</span> Directorio
+            <span className="bg-neutral-200 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400 text-[10px] font-black px-1.5 py-0.5 rounded-full">{clientes.length}</span>
           </button>
           <button
             onClick={() => setTab('ESTADISTICAS')}
-            className={`px-6 py-4 font-bold uppercase tracking-wide transition-colors border-b-4 ${tab === 'ESTADISTICAS' ? 'border-yellow-400 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-200 dark:hover:border-neutral-800'}`}
+            className={`flex items-center gap-2 px-6 py-4 font-bold uppercase tracking-wide transition-all border-b-4 ${tab === 'ESTADISTICAS' ? 'border-yellow-400 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-neutral-700'}`}
           >
-            Estadísticas & Cotizador
+            <span className="text-lg">📈</span> Estadísticas & Cotizador
           </button>
         </div>
 
         <div className="flex-1 max-w-7xl w-full mx-auto p-6 flex flex-col gap-6">
-          <div className="flex justify-between items-center bg-white dark:bg-neutral-900 p-4 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Métricas Principales</h2>
-            <div className="flex gap-2 bg-gray-100 dark:bg-neutral-950 p-1 rounded-lg border border-gray-200 dark:border-neutral-800">
+
+          {/* Métricas Cards con Glassmorphism y Hover Glow */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Clientes */}
+            <div className="group relative bg-white dark:bg-neutral-900 p-5 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm hover:shadow-lg hover:border-yellow-400/30 dark:hover:border-yellow-400/20 transition-all duration-300 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-yellow-400/10 dark:bg-yellow-400/5 flex items-center justify-center text-xl">👥</div>
+                <div>
+                  <h3 className="text-gray-500 dark:text-neutral-500 text-xs font-bold uppercase tracking-wider">Clientes</h3>
+                  <p className="text-2xl font-black text-gray-900 dark:text-white">{clientes.length}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Facturado */}
+            <div className="group relative bg-white dark:bg-neutral-900 p-5 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm hover:shadow-lg hover:shadow-yellow-400/5 hover:border-yellow-400/30 dark:hover:border-yellow-400/20 transition-all duration-300 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-yellow-400/10 dark:bg-yellow-400/5 flex items-center justify-center text-xl">💰</div>
+                <div>
+                  <h3 className="text-gray-500 dark:text-neutral-500 text-xs font-bold uppercase tracking-wider">Facturado <span className="text-[9px] text-gray-400 dark:text-neutral-600 normal-case">({timeFilter === 'SEMANA' ? 'semana' : 'mes'})</span></h3>
+                  <p className="text-2xl font-black text-yellow-500 dark:text-yellow-400">$ {facturadoActual.toLocaleString('es-AR')}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Ventas */}
+            <div className="group relative bg-white dark:bg-neutral-900 p-5 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm hover:shadow-lg hover:border-yellow-400/30 dark:hover:border-yellow-400/20 transition-all duration-300 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-yellow-400/10 dark:bg-yellow-400/5 flex items-center justify-center text-xl">🧾</div>
+                <div>
+                  <h3 className="text-gray-500 dark:text-neutral-500 text-xs font-bold uppercase tracking-wider">Ventas <span className="text-[9px] text-gray-400 dark:text-neutral-600 normal-case">({timeFilter === 'SEMANA' ? 'semana' : 'mes'})</span></h3>
+                  <p className="text-2xl font-black text-gray-900 dark:text-white">{cantidadVentasActual}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Ticket Promedio */}
+            <div className="group relative bg-white dark:bg-neutral-900 p-5 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm hover:shadow-lg hover:border-yellow-400/30 dark:hover:border-yellow-400/20 transition-all duration-300 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-yellow-400/10 dark:bg-yellow-400/5 flex items-center justify-center text-xl">📋</div>
+                <div>
+                  <h3 className="text-gray-500 dark:text-neutral-500 text-xs font-bold uppercase tracking-wider">Ticket Prom. <span className="text-[9px] text-gray-400 dark:text-neutral-600 normal-case">({timeFilter === 'SEMANA' ? 'semana' : 'mes'})</span></h3>
+                  <p className="text-2xl font-black text-gray-900 dark:text-white">$ {ticketPromedio.toLocaleString('es-AR')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Filtro de tiempo flotante */}
+          <div className="flex justify-end -mt-2">
+            <div className="flex gap-1 bg-neutral-100 dark:bg-neutral-900 p-1 rounded-lg border border-gray-200 dark:border-neutral-800">
               <button
                 onClick={() => setTimeFilter('SEMANA')}
-                className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${timeFilter === 'SEMANA' ? 'bg-yellow-400 text-black shadow-sm' : 'text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'}`}>
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${timeFilter === 'SEMANA' ? 'bg-yellow-400 text-black shadow-sm' : 'text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'}`}>
                 Esta Semana
               </button>
               <button
                 onClick={() => setTimeFilter('MES')}
-                className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${timeFilter === 'MES' ? 'bg-yellow-400 text-black shadow-sm' : 'text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'}`}>
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${timeFilter === 'MES' ? 'bg-yellow-400 text-black shadow-sm' : 'text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'}`}>
                 Este Mes
               </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-neutral-900 p-6 rounded-xl border border-gray-200 dark:border-neutral-800 transition-colors duration-300 shadow-sm">
-              <h3 className="text-gray-500 dark:text-neutral-400 text-sm font-bold uppercase tracking-tight">Clientes en Base</h3>
-              <p className="text-3xl font-black text-gray-900 dark:text-white mt-2">{clientes.length}</p>
-            </div>
-            <div className="bg-white dark:bg-neutral-900 p-6 rounded-xl border border-gray-200 dark:border-neutral-800 transition-colors duration-300 shadow-sm">
-              <h3 className="text-gray-500 dark:text-neutral-400 text-sm font-bold uppercase tracking-tight">Facturado ({timeFilter === 'SEMANA' ? 'Esta Semana' : 'Este Mes'})</h3>
-              <p className="text-3xl font-black text-yellow-500 dark:text-yellow-400 mt-2">$ {facturadoActual.toLocaleString()}</p>
-            </div>
-            <div className="bg-white dark:bg-neutral-900 p-6 rounded-xl border border-gray-200 dark:border-neutral-800 transition-colors duration-300 shadow-sm">
-              <h3 className="text-gray-500 dark:text-neutral-400 text-sm font-bold uppercase tracking-tight">Ventas ({timeFilter === 'SEMANA' ? 'Esta Semana' : 'Este Mes'})</h3>
-              <p className="text-3xl font-black text-gray-900 dark:text-white mt-2">{cantidadVentasActual}</p>
             </div>
           </div>
 
@@ -194,7 +235,7 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <DashboardStats />
+                <DashboardStats ventas={ventas} clientes={clientes} />
               </div>
               <div className="lg:col-span-1">
                 <CotizadorRapido clientes={clientes} />
@@ -202,6 +243,11 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* Footer sutil */}
+        <footer className="text-center py-4 text-[10px] font-bold text-gray-400 dark:text-neutral-700 uppercase tracking-widest">
+          Neumáticos Bonavia · CRM v2.0 · {new Date().getFullYear()}
+        </footer>
       </main>
     </div>
   );

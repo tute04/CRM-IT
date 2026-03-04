@@ -30,14 +30,12 @@ export default function InvoiceDropzone({ onExtracted, clientes = [] }: Props) {
 
             const extractedData = await res.json();
 
-            // Reconciliar con DB en el cliente
-            let foundClient = clientes.find(c => c.nombre.toLowerCase().includes(extractedData.nombre_cliente?.toLowerCase()) || (extractedData.cuitCliente && c.telefono === extractedData.cuitCliente));
-
             onExtracted({
-                nombre_cliente: foundClient ? foundClient.nombre : (extractedData.nombre_cliente || ''),
-                telefono: foundClient ? foundClient.telefono : (extractedData.cuitCliente || ''),
-                monto: extractedData.monto,
-                detalle: extractedData.fecha ? `Venta de Fecha ${extractedData.fecha}` : 'Venta Registrada (Remito)',
+                nombre_cliente: extractedData.nombre_cliente || '',
+                telefono: extractedData.telefono || '',
+                monto: extractedData.monto || 0,
+                detalle: extractedData.detalle || (extractedData.fecha ? `Venta de Fecha ${extractedData.fecha}` : 'Venta Registrada (Remito)'),
+                vendedor: extractedData.vendedor || '',
             });
         } catch (err) {
             console.error(err);

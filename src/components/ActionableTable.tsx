@@ -122,9 +122,12 @@ export default function ActionableTable({ ventas, clientes, searchTerm }: Props)
                         ))}
                         {alertsToDisplay.length === 0 && (
                             <tr>
-                                <td colSpan={4} className="p-8 text-center text-gray-500 dark:text-neutral-500 font-medium bg-white dark:bg-neutral-900 transition-colors duration-300">
-                                    <span className="text-2xl block mb-2">✅</span>
-                                    No hay alertas comerciales en este momento.
+                                <td colSpan={4} className="p-12 text-center bg-white dark:bg-neutral-900 transition-colors duration-300">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="w-16 h-16 rounded-2xl bg-green-50 dark:bg-green-500/5 flex items-center justify-center text-3xl border border-green-200 dark:border-green-500/10">✅</div>
+                                        <p className="text-gray-900 dark:text-white font-bold">¡Todo al día!</p>
+                                        <p className="text-gray-500 dark:text-neutral-500 text-sm max-w-xs">No hay clientes pendientes de seguimiento. Las alertas aparecerán automáticamente cuando detectemos oportunidades de venta.</p>
+                                    </div>
                                 </td>
                             </tr>
                         )}

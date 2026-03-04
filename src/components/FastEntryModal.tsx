@@ -43,28 +43,50 @@ export default function FastEntryModal({ clienteSearchTerm, isOpen, onClose, cli
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Validaciones
+    const [errores, setErrores] = useState<{ nombre?: string; monto?: string }>({});
+
     // Limpiar y sincronizar campos al abrir
     useEffect(() => {
         if (isOpen) {
             if (initialScanData) {
-                // Modo Autocompletado IA
-                setSearchTerm(initialScanData.nombre_cliente || '');
-                setCelular(initialScanData.telefono || '');
+                const nombreOCR = (initialScanData.nombre_cliente || '').trim();
+                const telefonoOCR = (initialScanData.telefono || '').trim();
+
+                let coincidenciaExacta = undefined;
+                if (nombreOCR !== '' || telefonoOCR !== '') {
+                    coincidenciaExacta = clientes.find(c =>
+                        (nombreOCR !== '' && c.nombre.toLowerCase() === nombreOCR.toLowerCase()) ||
+                        (telefonoOCR !== '' && c.telefono === telefonoOCR)
+                    );
+                }
+
+                if (coincidenciaExacta) {
+                    setSelectedCliente(coincidenciaExacta);
+                    setSearchTerm(coincidenciaExacta.nombre);
+                    setCelular(coincidenciaExacta.telefono);
+                    setIsCreatingNew(false);
+                } else {
+                    setSelectedCliente(null);
+                    setSearchTerm(nombreOCR);
+                    setCelular(telefonoOCR);
+                    setIsCreatingNew(true);
+                }
+
                 setTarea(initialScanData.detalle || '');
                 setMonto(initialScanData.monto ? initialScanData.monto.toString() : '');
                 setVendedor(initialScanData.vendedor || '');
-
-                // Forzamos la sobreescritura limpia del estado aislando la data inicial del OCR
-                setSelectedCliente(null);
-                setSearchTerm(initialScanData.nombre_cliente?.trim() || '');
-                setCelular(initialScanData.telefono?.trim() || '');
-                setIsCreatingNew(true);
             } else {
+                const termToSearch = clienteSearchTerm.trim();
+                let coincidenciaExacta = undefined;
+                if (termToSearch !== '') {
+                    coincidenciaExacta = clientes.find(c =>
+                        c.nombre.toLowerCase() === termToSearch.toLowerCase() ||
+                        c.telefono === termToSearch
+                    );
+                }
+
                 setSearchTerm(clienteSearchTerm);
-                const coincidenciaExacta = clientes.find(c =>
-                    c.nombre.toLowerCase() === clienteSearchTerm.toLowerCase() ||
-                    c.telefono === clienteSearchTerm
-                );
                 if (coincidenciaExacta) {
                     setSelectedCliente(coincidenciaExacta);
                     setCelular(coincidenciaExacta.telefono);
@@ -72,7 +94,7 @@ export default function FastEntryModal({ clienteSearchTerm, isOpen, onClose, cli
                 } else {
                     setSelectedCliente(null);
                     setCelular('');
-                    setIsCreatingNew(clienteSearchTerm.trim() !== ''); // Start creating if there's an initial unfound term
+                    setIsCreatingNew(termToSearch !== ''); // Start creating if there's an initial unfound term
                 }
                 setTarea('');
                 setMonto('');
@@ -96,9 +118,18 @@ export default function FastEntryModal({ clienteSearchTerm, isOpen, onClose, cli
         : clientes.filter(c =>
             c.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.telefono.includes(searchTerm)
-        ).slice(0, 5); // Limit to top 5 for UI performance
+        ).slice(0, 5);
 
     const clienteExistente = selectedCliente;
+
+    // Clientes frecuentes (los que más compras tienen, máximo 5)
+    const clientesFrecuentes = clientes
+        .map(c => ({ ...c, totalVentas: ventas.filter(v => v.cliente_id === c.id).length }))
+        .filter(c => c.totalVentas > 0)
+        .sort((a, b) => b.totalVentas - a.totalVentas)
+        .slice(0, 5);
+
+
 
     const historialVentasBase = clienteExistente
         ? ventas.filter(v => v.cliente_id === clienteExistente.id).sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
@@ -118,8 +149,13 @@ export default function FastEntryModal({ clienteSearchTerm, isOpen, onClose, cli
 
     const handleAlta = async (e: React.FormEvent) => {
         e.preventDefault();
+        const newErrors: { nombre?: string; monto?: string } = {};
+        if (searchTerm.trim().length < 2) newErrors.nombre = 'El nombre del cliente es obligatorio (mín. 2 caracteres)';
+        if (monto && (isNaN(parseFloat(monto)) || parseFloat(monto) < 0)) newErrors.monto = 'El monto debe ser un número positivo';
+        if (Object.keys(newErrors).length > 0) { setErrores(newErrors); return; }
+        setErrores({});
         setIsSubmitting(true);
-        const nuevoCliente = { nombre: searchTerm, telefono: celular };
+        const nuevoCliente = { nombre: searchTerm.trim(), telefono: celular };
         const realId = await onAddData(nuevoCliente);
         if (realId && tarea.trim() !== '') {
             await onAddVenta(realId, tarea, parseFloat(monto) || 0, vendedor);
@@ -203,89 +239,125 @@ export default function FastEntryModal({ clienteSearchTerm, isOpen, onClose, cli
                 </div>
 
                 <div className="overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+                    {/* CLIENTES FRECUENTES - ACCESO RÁPIDO */}
+                    {!selectedCliente && !isCreatingNew && clientesFrecuentes.length > 0 && (
+                        <div className="mb-4">
+                            <label className="block text-[10px] font-black text-gray-400 dark:text-neutral-500 mb-2 uppercase tracking-widest">⚡ Clientes Frecuentes</label>
+                            <div className="flex flex-wrap gap-2">
+                                {clientesFrecuentes.map(c => (
+                                    <button
+                                        key={c.id}
+                                        type="button"
+                                        onClick={() => handleSelectCliente(c)}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-neutral-100 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 border border-gray-200 dark:border-neutral-700 hover:border-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-400/10 dark:hover:text-yellow-400 transition-all duration-200 shadow-sm hover:shadow"
+                                    >
+                                        {c.nombre}
+                                        <span className="text-[10px] text-gray-400 dark:text-neutral-500">({c.totalVentas})</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* BÚSQUEDA / SELECCIÓN COMBOBOX INTELIGENTE */}
                     <div className="mb-6 relative z-50">
                         <label className="block text-sm font-bold text-gray-500 dark:text-neutral-400 mb-2 uppercase tracking-wider">Cliente a Facturar</label>
+                        {errores.nombre && <p className="text-red-500 text-xs font-bold mb-1 animate-pulse">{errores.nombre}</p>}
 
-                        {!selectedCliente && !isCreatingNew ? (
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    name="search-client-random-field"
-                                    autoComplete="new-password"
-                                    value={searchTerm}
-                                    onChange={e => {
-                                        setSearchTerm(e.target.value);
-                                        setIsDropdownOpen(true);
-                                    }}
-                                    onFocus={() => setIsDropdownOpen(true)}
-                                    className="w-full px-4 py-3 bg-white dark:bg-neutral-950 border border-gray-300 dark:border-neutral-800 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 focus:outline-none transition-all duration-300 ease-out placeholder-gray-400 dark:placeholder-neutral-500 font-medium text-lg shadow-sm"
-                                    placeholder="Buscar cliente por nombre o teléfono..."
-                                />
-
-                                {isDropdownOpen && searchTerm.trim() !== '' && (
-                                    <ul className="absolute w-full z-50 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-lg shadow-2xl mt-2 max-h-56 overflow-y-auto overflow-x-hidden divide-y divide-gray-100 dark:divide-neutral-800">
-                                        {filteredClientes.map(c => (
-                                            <li
-                                                key={c.id}
-                                                onClick={() => handleSelectCliente(c)}
-                                                className="p-4 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer flex justify-between items-center group transition-colors"
-                                            >
-                                                <span className="text-gray-900 dark:text-white font-bold group-hover:text-yellow-600 dark:group-hover:text-yellow-400">{c.nombre}</span>
-                                                <span className="text-gray-500 dark:text-neutral-500 font-medium text-sm">{c.telefono}</span>
-                                            </li>
-                                        ))}
-                                        <li
-                                            onClick={handleCreateNew}
-                                            className="p-4 text-yellow-600 dark:text-yellow-400 bg-yellow-50/50 hover:bg-yellow-50 dark:bg-neutral-950 dark:hover:bg-neutral-800 cursor-pointer font-black flex items-center gap-2 transition-colors uppercase text-sm tracking-wide"
-                                        >
-                                            <span className="text-lg leading-none">+</span> Crear nuevo cliente: "{searchTerm}"
-                                        </li>
-                                    </ul>
-                                )}
-                            </div>
-                        ) : (
-                            // MODO SELECCIONADO / MODO CREACIÓN
-                            <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {isCreatingNew && !selectedCliente ? (
                                 <div className="relative">
                                     <input
                                         type="text"
-                                        name="search-client-random-field"
-                                        autoComplete="new-password"
+                                        name="search-client-unified-field"
+                                        autoComplete="off"
                                         value={searchTerm}
-                                        readOnly
-                                        className={`w-full px-4 py-3 border rounded-xl font-bold cursor-not-allowed transition-all shadow-sm pr-12 ${isCreatingNew ? 'bg-yellow-50 dark:bg-yellow-400/10 border-yellow-200 dark:border-yellow-500/30 text-yellow-800 dark:text-yellow-400' : 'bg-gray-100 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-300'}`}
+                                        onChange={e => setSearchTerm(e.target.value)}
+                                        className="w-full px-4 py-3 border rounded-xl font-bold transition-all shadow-sm pr-12 bg-yellow-50 dark:bg-yellow-400/10 border-yellow-300 dark:border-yellow-500/50 text-yellow-900 dark:text-yellow-400 focus:ring-2 focus:ring-yellow-400/70 focus:outline-none"
                                     />
-                                    {isCreatingNew && (
-                                        <div className="absolute -top-3 left-4 bg-yellow-400 text-black text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest shadow-sm">Nuevo</div>
-                                    )}
+                                    <div className="absolute -top-3 left-4 bg-yellow-400 text-black text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest shadow-sm">Nuevo Cliente</div>
                                     <button
                                         type="button"
                                         onClick={handleClearSelection}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-gray-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400"
-                                        title="Cambiar u Olvidar Selección"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-gray-400 hover:text-red-500"
+                                        title="Cancelar y buscar de nuevo"
                                     >
                                         ❌
                                     </button>
                                 </div>
-                                <div>
+                            ) : (
+                                <div className="relative">
                                     <input
-                                        type="tel"
-                                        name="phone-random-field"
-                                        autoComplete="new-password"
-                                        required
-                                        value={celular}
-                                        onChange={e => setCelular(e.target.value)}
-                                        readOnly={!isCreatingNew}
-                                        className={`w-full px-4 py-3 border rounded-xl font-medium focus:outline-none transition-all shadow-sm placeholder-gray-400 dark:placeholder-neutral-500 ${isCreatingNew ? 'bg-white dark:bg-neutral-950 border-gray-300 dark:border-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400' : 'bg-gray-100 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-400 cursor-not-allowed'}`}
-                                        placeholder="Tipeá su WhatsApp / Teléfono..."
+                                        type="text"
+                                        name="search-client-unified-field"
+                                        autoComplete="off"
+                                        value={searchTerm}
+                                        onChange={e => {
+                                            setSearchTerm(e.target.value);
+                                            setIsDropdownOpen(true);
+                                        }}
+                                        onFocus={() => setIsDropdownOpen(true)}
+                                        className={`w-full px-4 py-3 border rounded-xl font-bold transition-all shadow-sm pr-12 ${selectedCliente
+                                            ? 'bg-gray-100 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-300'
+                                            : 'bg-white dark:bg-neutral-950 border-gray-300 dark:border-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 focus:outline-none'
+                                            }`}
+                                        placeholder="Buscar cliente por nombre o teléfono..."
                                     />
                                     {selectedCliente && (
-                                        <div className="absolute -top-3 right-4 bg-green-500 text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest shadow-sm">Guardado</div>
+                                        <div className="absolute -top-3 left-4 bg-green-500 text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest shadow-sm">Guardado</div>
+                                    )}
+
+                                    {searchTerm && selectedCliente && (
+                                        <button
+                                            type="button"
+                                            onClick={handleClearSelection}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-gray-400 hover:text-red-500"
+                                            title="Limpiar Selección"
+                                        >
+                                            ❌
+                                        </button>
+                                    )}
+
+                                    {isDropdownOpen && searchTerm.trim() !== '' && filteredClientes.length > 0 && (
+                                        <ul className="absolute w-[200%] md:w-[150%] z-[100] bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-lg shadow-2xl mt-2 max-h-56 overflow-y-auto overflow-x-hidden divide-y divide-gray-100 dark:divide-neutral-800">
+                                            {filteredClientes.map(c => (
+                                                <li
+                                                    key={c.id}
+                                                    onClick={() => handleSelectCliente(c)}
+                                                    className="p-4 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer flex justify-between items-center group transition-colors"
+                                                >
+                                                    <span className="text-gray-900 dark:text-white font-bold group-hover:text-yellow-600 dark:group-hover:text-yellow-400">{c.nombre}</span>
+                                                    <span className="text-gray-500 dark:text-neutral-500 font-medium text-sm">{c.telefono}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                    {isDropdownOpen && !selectedCliente && searchTerm.trim() !== '' && (
+                                        <ul className="absolute w-[200%] md:w-[150%] z-[100] bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-lg shadow-2xl mt-2 overflow-hidden">
+                                            <li
+                                                onClick={handleCreateNew}
+                                                className="p-4 text-yellow-600 dark:text-yellow-400 bg-yellow-50/50 hover:bg-yellow-50 dark:bg-neutral-950 dark:hover:bg-neutral-800 cursor-pointer font-black flex items-center gap-2 transition-colors uppercase text-sm tracking-wide"
+                                            >
+                                                <span className="text-lg leading-none">+</span> Crear nuevo cliente: "{searchTerm}"
+                                            </li>
+                                        </ul>
                                     )}
                                 </div>
+                            )}
+                            <div>
+                                <input
+                                    type="tel"
+                                    name="phone-unified-field"
+                                    autoComplete="off"
+                                    required={!selectedCliente}
+                                    value={celular}
+                                    onChange={e => setCelular(e.target.value)}
+                                    readOnly={!!selectedCliente}
+                                    className={`w-full px-4 py-3 border rounded-xl font-medium focus:outline-none transition-all shadow-sm placeholder-gray-400 dark:placeholder-neutral-500 ${selectedCliente ? 'bg-gray-100 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-neutral-950 border-gray-300 dark:border-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400'}`}
+                                    placeholder="WhatsApp / Teléfono..."
+                                />
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     {isCreatingNew && (
@@ -296,7 +368,7 @@ export default function FastEntryModal({ clienteSearchTerm, isOpen, onClose, cli
                                 <div className="grid grid-cols-3 gap-4">
                                     <div className="col-span-2"><label className="block text-xs font-bold text-gray-500 dark:text-neutral-500 mb-1 uppercase tracking-wider">Producto o Detalle</label><input type="text" value={tarea} onChange={e => setTarea(e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-neutral-950 border border-gray-300 dark:border-neutral-800 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 focus:outline-none transition-all duration-300 ease-out text-sm placeholder-gray-400 dark:placeholder-neutral-500" placeholder="Ej: 4 Cubiertas Pirelli" /></div>
                                     <div><label className="block text-xs font-bold text-gray-500 dark:text-neutral-500 mb-1 uppercase tracking-wider">Vendedor</label><input type="text" value={vendedor} onChange={e => setVendedor(e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-neutral-950 border border-gray-300 dark:border-neutral-800 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 focus:outline-none transition-all duration-300 ease-out text-sm placeholder-gray-400 dark:placeholder-neutral-500" placeholder="Ej: Tute" /></div>
-                                    <div className="col-span-3"><label className="block text-xs font-bold text-gray-500 dark:text-neutral-500 mb-1 uppercase tracking-wider">Total Facturado $</label><input type="number" value={monto} onChange={e => setMonto(e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-neutral-950 border border-gray-300 dark:border-neutral-800 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 focus:outline-none transition-all duration-300 ease-out text-sm font-mono placeholder-gray-400 dark:placeholder-neutral-500" placeholder="0" /></div>
+                                    <div className="col-span-3"><label className="block text-xs font-bold text-gray-500 dark:text-neutral-500 mb-1 uppercase tracking-wider">Total Facturado $</label><input type="number" value={monto} onChange={e => { setMonto(e.target.value); setErrores(prev => ({ ...prev, monto: undefined })); }} className={`w-full px-3 py-2 bg-white dark:bg-neutral-950 border ${errores.monto ? 'border-red-400 dark:border-red-500' : 'border-gray-300 dark:border-neutral-800'} text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 focus:outline-none transition-all duration-300 ease-out text-sm font-mono placeholder-gray-400 dark:placeholder-neutral-500`} placeholder="0" />{errores.monto && <p className="text-red-500 text-xs font-bold mt-1">{errores.monto}</p>}</div>
                                 </div>
                             </div>
                             <button type="submit" className="relative overflow-hidden mt-4 w-full py-3 px-6 bg-yellow-400 hover:bg-yellow-500 text-black font-black tracking-wide rounded-xl shadow-md hover:-translate-y-1 transition-all duration-300 ease-out border border-yellow-500">
