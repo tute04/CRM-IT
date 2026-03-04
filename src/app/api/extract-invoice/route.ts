@@ -28,30 +28,52 @@ export async function POST(req: Request) {
             pdfParser.parseBuffer(buffer);
         });
 
-        // Buscamos lo que está después de "Razón Social:", y frenamos la captura apenas encontremos:
-        // - 2 o más espacios en blanco seguidos (tabulación de columna)
-        // - Un salto de línea (\r o \n)
-        // - Las palabras Domicilio, Condición o CUIT
-        const matchCliente = text.match(/Apellido y Nombre \/ Razón Social:\s*(.+?)(?=\s{2,}|\r|\n|Domicilio|Condición|CUIT)/i);
+        // 1. Limpiamos saltos de línea y normalizamos
+        const cleanText = text.replace(/\r\n/g, '\n');
 
+        // 2. EXTRACCIÓN DEL CLIENTE (A prueba de columnas mezcladas)
         let clienteExtraido = "Cliente Desconocido";
-        if (matchCliente && matchCliente[1]) {
-            clienteExtraido = matchCliente[1].trim();
+        const razonSocialMatch = cleanText.match(/Apellido y Nombre \/ Razón Social:\s*(.+)/i);
+
+        if (razonSocialMatch) {
+            let tempName = razonSocialMatch[1];
+            // Borramos encabezados intrusos que pdf2json suele leer por error de columnas
+            const headersBorrables = [/Domicilio Comercial:/ig, /Condición frente al IVA:/ig, /IVA Responsable Inscripto/ig, /Cuenta Corriente/ig, /CUIT:/ig];
+            headersBorrables.forEach(regex => { tempName = tempName.replace(regex, ''); });
+
+            // Agarramos lo que quedó limpio hasta el primer salto de línea o espacio gigante
+            clienteExtraido = tempName.trim().split(/\s{2,}|\n/)[0].trim();
         }
 
-        // 3. Extracción de Monto Total (Esto ya funciona bien, déjalo igual)
-        const matchMonto = text.match(/Importe Total:(?:\s*\n*\s*|\r\n)\$?\s*([\d,\.]+)/);
-        let montoExtraido = 0;
+        // 3. EXTRACCIÓN DE PRODUCTOS / DETALLE
+        let detalleExtraido = "Venta";
+        // Buscamos lo que está debajo de la columna "Subtotal c/IVA" y antes de los "Tributos" o "Importe Neto"
+        const tablaMatch = cleanText.match(/Subtotal c\/IVA\s*\n([\s\S]*?)(?:Importe Otros Tributos|Importe Neto Gravado)/i);
 
+        if (tablaMatch && tablaMatch[1]) {
+            // Filtramos para quedarnos con el texto que parece la descripción de la goma/servicio
+            const lineasProducto = tablaMatch[1]
+                .split('\n')
+                .map(l => l.trim())
+                .filter(l => l.length > 5) // ignorar números sueltos
+                .filter(l => !l.includes('unidades') && !l.match(/^[0-9,\.]+$/)); // sacar columnas de cantidades y precios
+
+            if (lineasProducto.length > 0) {
+                detalleExtraido = lineasProducto.join(' + ').substring(0, 120); // Unimos y limitamos largo
+            }
+        }
+
+        // 4. EXTRACCIÓN DEL MONTO (Ya funcionaba perfecto)
+        const matchMonto = cleanText.match(/Importe Total:(?:\s*\n*\s*)\$?\s*([\d,\.]+)/);
+        let montoExtraido = 0;
         if (matchMonto) {
-            const numeroLimpio = matchMonto[1].replace(/\./g, '').replace(',', '.');
-            montoExtraido = parseFloat(numeroLimpio);
+            montoExtraido = parseFloat(matchMonto[1].replace(/\./g, '').replace(',', '.'));
         }
 
         return NextResponse.json({
             nombre_cliente: clienteExtraido,
-            telefono: "",
-            detalle: "Extracción automática PDF AFIP",
+            telefono: "", // Sigue vacío para que no inyecte el de Chrome
+            detalle: detalleExtraido,
             monto: montoExtraido,
             fecha: new Date().toISOString().split('T')[0]
         });
