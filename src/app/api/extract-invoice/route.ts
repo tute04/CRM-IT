@@ -28,21 +28,15 @@ export async function POST(req: Request) {
             pdfParser.parseBuffer(buffer);
         });
 
-        // --- Extracción a prueba de balas para el Cliente ---
+        // Buscamos lo que está después de "Razón Social:", y frenamos la captura apenas encontremos:
+        // - 2 o más espacios en blanco seguidos (tabulación de columna)
+        // - Un salto de línea (\r o \n)
+        // - Las palabras Domicilio, Condición o CUIT
+        const matchCliente = text.match(/Apellido y Nombre \/ Razón Social:\s*(.+?)(?=\s{2,}|\r|\n|Domicilio|Condición|CUIT)/i);
+
         let clienteExtraido = "Cliente Desconocido";
-
-        // 1. Partimos el texto justo donde empieza el nombre
-        const partesCliente = text.split(/Apellido y Nombre \/ Razón Social:\s*/i);
-
-        if (partesCliente.length > 1) {
-            // 2. Agarramos todo lo que sigue después de "Razón Social:"
-            let textoSobrante = partesCliente[1];
-
-            // 3. Lo cortamos en seco apenas aparezca "Domicilio", "Condición" o "CUIT" (limpiando la basura)
-            clienteExtraido = textoSobrante.split(/Domicilio|Condición|CUIT/i)[0].trim();
-
-            // Por si quedó algún salto de línea pegado
-            clienteExtraido = clienteExtraido.split('\n')[0].trim();
+        if (matchCliente && matchCliente[1]) {
+            clienteExtraido = matchCliente[1].trim();
         }
 
         // 3. Extracción de Monto Total (Esto ya funciona bien, déjalo igual)

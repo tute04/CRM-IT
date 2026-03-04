@@ -211,8 +211,8 @@ export default function FastEntryModal({ clienteSearchTerm, isOpen, onClose, cli
                             <div className="relative">
                                 <input
                                     type="text"
-                                    name="search-client-random"
-                                    autoComplete="off"
+                                    name="search-client-random-field"
+                                    autoComplete="new-password"
                                     value={searchTerm}
                                     onChange={e => {
                                         setSearchTerm(e.target.value);
@@ -250,8 +250,8 @@ export default function FastEntryModal({ clienteSearchTerm, isOpen, onClose, cli
                                 <div className="relative">
                                     <input
                                         type="text"
-                                        name="selected-client-random"
-                                        autoComplete="off"
+                                        name="search-client-random-field"
+                                        autoComplete="new-password"
                                         value={searchTerm}
                                         readOnly
                                         className={`w-full px-4 py-3 border rounded-xl font-bold cursor-not-allowed transition-all shadow-sm pr-12 ${isCreatingNew ? 'bg-yellow-50 dark:bg-yellow-400/10 border-yellow-200 dark:border-yellow-500/30 text-yellow-800 dark:text-yellow-400' : 'bg-gray-100 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-300'}`}
@@ -271,7 +271,7 @@ export default function FastEntryModal({ clienteSearchTerm, isOpen, onClose, cli
                                 <div>
                                     <input
                                         type="tel"
-                                        name="client-phone-random"
+                                        name="phone-random-field"
                                         autoComplete="new-password"
                                         required
                                         value={celular}
