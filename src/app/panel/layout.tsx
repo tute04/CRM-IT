@@ -12,10 +12,10 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     const [isDarkMode, setIsDarkMode] = useState(false);
     const supabase = createClient();
     const router = useRouter();
-    const { loading: negocioLoading } = useNegocio();
+    const { negocio, loading: negocioLoading } = useNegocio();
 
     useEffect(() => {
-        const saved = localStorage.getItem('itirium-dark-mode');
+        const saved = localStorage.getItem('itrium-dark-mode');
         if (saved !== null) {
             setIsDarkMode(saved === 'true');
         } else {
@@ -24,8 +24,16 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     }, []);
 
     useEffect(() => {
-        localStorage.setItem('itirium-dark-mode', String(isDarkMode));
+        localStorage.setItem('itrium-dark-mode', String(isDarkMode));
     }, [isDarkMode]);
+
+    useEffect(() => {
+        if (negocio?.nombre) {
+            document.title = `${negocio.nombre} | ITrium`;
+        } else if (!negocioLoading) {
+            document.title = 'Panel | ITrium';
+        }
+    }, [negocio, negocioLoading]);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();

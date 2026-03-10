@@ -4,8 +4,11 @@ import { NegocioProvider } from '@/contexts/NegocioContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 
 export const metadata: Metadata = {
-  title: 'ITIRIUM | El CRM simple para negocios que crecen',
-  description: 'Gestioná clientes, ventas y cobros desde un solo lugar. 14 días gratis, sin tarjeta.',
+  title: 'ITrium | CRM para negocios',
+  description: 'El CRM simple para negocios argentinos que quieren crecer. Clientes, ventas, cotizaciones e inventario en un solo lugar.',
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({

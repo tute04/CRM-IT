@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { createClient } from '@/utils/supabase-client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Logo from '@/components/ui/Logo';
 
 const RUBROS = [
     'Gomería / Neumáticos',
@@ -84,16 +85,16 @@ export default function RegistroPage() {
 
     return (
         <div className="relative w-full max-w-sm">
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-[#111111] border border-[#222222] rounded-2xl shadow-sm overflow-hidden">
                 {/* Header */}
-                <div className="p-8 pb-0 text-center">
-                    <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-500 rounded-xl mb-4">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></svg>
+                <div className="p-8 pb-0 text-center flex flex-col items-center">
+                    <div className="mb-6">
+                        <Logo size="lg" variant="dark" />
                     </div>
-                    <h1 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">
+                    <h1 className="text-xl font-bold text-white tracking-tight">
                         Crear cuenta
                     </h1>
-                    <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1">
+                    <p className="text-zinc-400 text-sm mt-1">
                         14 días gratis · Sin tarjeta
                     </p>
                 </div>
@@ -107,7 +108,7 @@ export default function RegistroPage() {
                     )}
 
                     <div>
-                        <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5 uppercase tracking-wider">
+                        <label className="block text-xs font-semibold text-zinc-400 mb-1.5 uppercase tracking-wider">
                             Nombre del Negocio
                         </label>
                         <input
@@ -115,21 +116,21 @@ export default function RegistroPage() {
                             required
                             value={nombreNegocio}
                             onChange={(e) => setNombreNegocio(e.target.value)}
-                            className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 focus:outline-none transition-all text-sm"
+                            className="w-full px-3.5 py-2.5 bg-[#1a1a1a] border border-[#333333] text-white rounded-lg focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 focus:outline-none transition-all text-sm"
                             placeholder="Ej: Taller Don Pedro"
                             autoComplete="organization"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5 uppercase tracking-wider">
+                        <label className="block text-xs font-semibold text-zinc-400 mb-1.5 uppercase tracking-wider">
                             Rubro
                         </label>
                         <select
                             required
                             value={rubro}
                             onChange={(e) => setRubro(e.target.value)}
-                            className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 focus:outline-none transition-all text-sm"
+                            className="w-full px-3.5 py-2.5 bg-[#1a1a1a] border border-[#333333] text-white rounded-lg focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 focus:outline-none transition-all text-sm"
                         >
                             <option value="" disabled>Seleccioná tu rubro...</option>
                             {RUBROS.map((r) => (
@@ -139,7 +140,7 @@ export default function RegistroPage() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5 uppercase tracking-wider">
+                        <label className="block text-xs font-semibold text-zinc-400 mb-1.5 uppercase tracking-wider">
                             Email
                         </label>
                         <input
@@ -147,7 +148,7 @@ export default function RegistroPage() {
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 focus:outline-none transition-all text-sm"
+                            className="w-full px-3.5 py-2.5 bg-[#1a1a1a] border border-[#333333] text-white rounded-lg focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 focus:outline-none transition-all text-sm"
                             placeholder="tu@email.com"
                             autoComplete="email"
                         />
@@ -155,7 +156,7 @@ export default function RegistroPage() {
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5 uppercase tracking-wider">
+                            <label className="block text-xs font-semibold text-zinc-400 mb-1.5 uppercase tracking-wider">
                                 Contraseña
                             </label>
                             <input
@@ -163,14 +164,14 @@ export default function RegistroPage() {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 focus:outline-none transition-all text-sm"
+                                className="w-full px-3.5 py-2.5 bg-[#1a1a1a] border border-[#333333] text-white rounded-lg focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 focus:outline-none transition-all text-sm"
                                 placeholder="••••••"
                                 minLength={6}
                                 autoComplete="new-password"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5 uppercase tracking-wider">
+                            <label className="block text-xs font-semibold text-zinc-400 mb-1.5 uppercase tracking-wider">
                                 Confirmar
                             </label>
                             <input
@@ -178,7 +179,7 @@ export default function RegistroPage() {
                                 required
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 focus:outline-none transition-all text-sm"
+                                className="w-full px-3.5 py-2.5 bg-[#1a1a1a] border border-[#333333] text-white rounded-lg focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 focus:outline-none transition-all text-sm"
                                 placeholder="••••••"
                                 minLength={6}
                                 autoComplete="new-password"
@@ -189,14 +190,14 @@ export default function RegistroPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-2.5 bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-400 disabled:cursor-wait text-white font-semibold rounded-lg transition-colors text-sm mt-1"
+                        className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-400 disabled:cursor-wait text-[#0a0a0a] font-semibold rounded-lg transition-colors text-sm mt-1"
                     >
                         {loading ? 'Creando cuenta...' : 'Empezar 14 días gratis'}
                     </button>
 
-                    <p className="text-center text-zinc-500 dark:text-zinc-400 text-sm">
+                    <p className="text-center text-zinc-400 text-sm">
                         ¿Ya tenés cuenta?{' '}
-                        <Link href="/login" className="text-indigo-500 hover:text-indigo-400 font-semibold transition-colors">
+                        <Link href="/login" className="text-orange-500 hover:text-orange-400 font-semibold transition-colors">
                             Iniciar sesión
                         </Link>
                     </p>

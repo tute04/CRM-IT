@@ -1,5 +1,5 @@
 -- ============================================================
--- ITIRIUM CRM v2 — Migración Incremental
+-- ITrium CRM v2 — Migración Incremental
 -- Ejecutar en Supabase SQL Editor
 -- NO toca tablas existentes, solo agrega columnas y tablas nuevas
 -- ============================================================

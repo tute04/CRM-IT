@@ -153,7 +153,7 @@ export default function CotizacionesPage() {
         // Header
         doc.setFontSize(22);
         doc.setTextColor(249, 115, 22);
-        doc.text(negocio?.nombre || 'ITIRIUM', 20, 25);
+        doc.text(negocio?.nombre || 'ITrium', 20, 25);
         doc.setFontSize(10);
         doc.setTextColor(120, 120, 120);
         doc.text('Cotización', 20, 33);

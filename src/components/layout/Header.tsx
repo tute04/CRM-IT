@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Cliente, Venta } from '@/types';
 import { formatCurrency } from '@/utils/helpers';
 import Link from 'next/link';
+import Logo from '@/components/ui/Logo';
 
 interface HeaderProps {
     isDarkMode: boolean;
@@ -85,16 +86,13 @@ export default function Header({ isDarkMode, setIsDarkMode }: HeaderProps) {
         <header className="h-16 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 lg:px-6 shrink-0 sticky top-0 z-30">
             {/* Mobile logo */}
             <div className="flex items-center gap-2.5 lg:hidden">
-                <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center shrink-0">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" />
-                    </svg>
-                </div>
-                <span className="font-bold text-sm text-zinc-900 dark:text-white">ITIRIUM</span>
+                <Logo size="sm" variant="dark" />
             </div>
 
             {/* Page title area - desktop only */}
-            <div className="hidden lg:block" />
+            <div className="hidden lg:flex items-center px-4">
+                <span className="text-sm font-medium text-white">{negocio?.nombre || 'Mi Negocio'}</span>
+            </div>
 
             {/* Search + Actions */}
             <div className="flex items-center gap-2" ref={containerRef}>
@@ -197,8 +195,8 @@ export default function Header({ isDarkMode, setIsDarkMode }: HeaderProps) {
 
                 {/* Trial badge */}
                 {negocio?.plan === 'trial' && diasRestantes !== null && (
-                    <Link href="/suscripcion" className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 text-xs font-semibold border border-orange-200 dark:border-orange-500/20 hover:bg-orange-100 dark:hover:bg-orange-500/20 transition-colors">
-                        <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse-subtle" />
+                    <Link href="/suscripcion" className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/10 text-orange-500 text-xs font-semibold border border-orange-500/20 transition-colors">
+                        <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
                         {diasRestantes}d trial
                     </Link>
                 )}

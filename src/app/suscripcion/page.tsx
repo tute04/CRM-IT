@@ -55,7 +55,7 @@ export default function SuscripcionPage() {
                         )}
                     </div>
                     <h1 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">
-                        {isPlanActivo ? 'Plan activo' : 'Suscripción ITIRIUM Pro'}
+                        {isPlanActivo ? 'Plan activo' : 'Suscripción ITrium Pro'}
                     </h1>
                     {negocio && (
                         <p className="text-zinc-500 text-sm">

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase-server';
 import { redirect } from 'next/navigation';
+import Logo from '@/components/ui/Logo';
 
 export default async function LandingPage() {
   // If user is already logged in, redirect to panel
@@ -13,14 +14,9 @@ export default async function LandingPage() {
       {/* Nav */}
       <nav className="fixed top-0 w-full bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/10 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500">
-              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-              <polyline points="2 17 12 22 22 17"></polyline>
-              <polyline points="2 12 12 17 22 12"></polyline>
-            </svg>
-            <span className="text-lg font-bold tracking-tight text-white">ITIRIUM</span>
-          </div>
+          <Link href="/">
+            <Logo size="md" variant="dark" />
+          </Link>
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
               Iniciar sesión
@@ -116,7 +112,7 @@ export default async function LandingPage() {
             <h2 className="text-2xl font-bold text-white mb-2">Plan Pro</h2>
             <div className="flex items-end gap-1 mb-8">
               <span className="text-5xl font-extrabold tracking-tight text-white">$8.990</span>
-              <span className="text-zinc-500 text-sm font-medium mb-1"> ARS / mes</span>
+              <span className="text-zinc-500 text-sm font-medium mb-1"> ARS/mes</span>
             </div>
 
             <ul className="space-y-4 mb-8">
@@ -146,16 +142,9 @@ export default async function LandingPage() {
       {/* Footer */}
       <footer className="py-8 px-6 border-t border-white/10">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-white">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500">
-              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-              <polyline points="2 17 12 22 22 17"></polyline>
-              <polyline points="2 12 12 17 22 12"></polyline>
-            </svg>
-            <span className="text-sm font-bold tracking-tight">ITIRIUM</span>
-          </div>
+          <Logo size="sm" variant="dark" />
           <p className="text-sm text-zinc-500 text-center sm:text-right">
-            © {new Date().getFullYear()} ITIRIUM · Hecho para negocios argentinos
+            © {new Date().getFullYear()} ITrium · Hecho para negocios argentinos
           </p>
         </div>
       </footer>

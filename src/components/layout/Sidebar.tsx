@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useNegocio } from '@/contexts/NegocioContext';
+import Logo from '@/components/ui/Logo';
 
 const navItems = [
     {
@@ -86,16 +87,8 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
     return (
         <aside className="hidden lg:flex w-[240px] h-screen flex-col bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 shrink-0 sticky top-0">
             {/* Logo */}
-            <div className="px-5 h-16 flex items-center gap-2.5 border-b border-zinc-100 dark:border-zinc-800/60 shrink-0">
-                <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center shrink-0">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" />
-                    </svg>
-                </div>
-                <div className="min-w-0">
-                    <p className="text-sm font-bold text-zinc-900 dark:text-white truncate">ITIRIUM</p>
-                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">{negocio?.nombre || 'Mi Negocio'}</p>
-                </div>
+            <div className="px-5 h-16 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/60 shrink-0">
+                <Logo size="md" variant="dark" />
             </div>
 
             {/* Nav */}
@@ -105,8 +98,8 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
                         key={item.href}
                         href={item.href}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${isActive(item.href)
-                            ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400'
-                            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+                            ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-500 border-l-[3px] border-orange-500 pl-[9px]'
+                            : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
                             }`}
                     >
                         <span className={`shrink-0 ${isActive(item.href) ? 'text-orange-500' : ''}`}>
@@ -124,8 +117,8 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
                         key={item.href}
                         href={item.href}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive(item.href)
-                            ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400'
-                            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+                            ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-500 border-l-[3px] border-orange-500 pl-[9px]'
+                            : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
                             }`}
                     >
                         {item.icon}
@@ -134,7 +127,7 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
                 ))}
                 <button
                     onClick={onLogout}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
                 >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
