@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/utils/supabase-client';
 import { useNegocio } from '@/contexts/NegocioContext';
-import { Cliente, Venta, Recordatorio } from '@/types';
+import { Cliente, Venta, Recordatorio, Producto } from '@/types';
 import { formatCurrency, getWeekStart, getMonthStart, getYearStart } from '@/utils/helpers';
 import { SkeletonCard } from '@/components/ui/Skeleton';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -15,20 +15,26 @@ export default function DashboardPage() {
     const [clientes, setClientes] = useState<Cliente[]>([]);
     const [ventas, setVentas] = useState<Venta[]>([]);
     const [recordatorios, setRecordatorios] = useState<Recordatorio[]>([]);
+    const [productosBajoStock, setProductosBajoStock] = useState<Producto[]>([]);
     const [timeFilter, setTimeFilter] = useState<TimeFilter>('MES');
     const [loading, setLoading] = useState(true);
     const supabase = createClient();
     const { negocio, diasRestantes } = useNegocio();
 
     const fetchData = useCallback(async () => {
-        const [cRes, vRes, rRes] = await Promise.all([
+        const [cRes, vRes, rRes, pRes] = await Promise.all([
             supabase.from('clientes').select('*'),
             supabase.from('ventas').select('*').order('fecha', { ascending: false }),
             supabase.from('recordatorios').select('*, cliente:clientes(nombre)').eq('completado', false).order('fecha', { ascending: true }).limit(10),
+            supabase.from('productos').select('*').lte('stock_actual', 'stock_minimo'), // We cannot directly compare two columns in supabase-js select, better to fetch all or use a view/rpc. Let's fetch all products and filter in js for now since dataset is small or use filter.
         ]);
         if (cRes.data) setClientes(cRes.data as Cliente[]);
         if (vRes.data) setVentas(vRes.data as Venta[]);
         if (rRes.data) setRecordatorios(rRes.data as Recordatorio[]);
+        if (pRes.data) {
+            const p = pRes.data as Producto[];
+            setProductosBajoStock(p.filter(x => x.stock_actual <= x.stock_minimo));
+        }
         setLoading(false);
     }, [supabase]);
 
@@ -308,7 +314,16 @@ export default function DashboardPage() {
                                 </div>
                             </div>
                         )}
-                        {clientesInactivos.length === 0 && ventasViejasPendientes.length === 0 && (diasRestantes === null || diasRestantes > 3) && (
+                        {productosBajoStock.length > 0 && (
+                            <div className="flex items-start gap-3 p-3 rounded-lg bg-orange-50 dark:bg-orange-500/5 border border-orange-200 dark:border-orange-500/20">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-orange-500 mt-0.5 shrink-0"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                <div>
+                                    <p className="text-xs font-semibold text-orange-700 dark:text-orange-400">{productosBajoStock.length} productos con bajo stock</p>
+                                    <p className="text-[10px] text-orange-600/70 dark:text-orange-500/60">Revisá tu inventario</p>
+                                </div>
+                            </div>
+                        )}
+                        {clientesInactivos.length === 0 && ventasViejasPendientes.length === 0 && (diasRestantes === null || diasRestantes > 3) && productosBajoStock.length === 0 && (
                             <p className="text-sm text-zinc-400 text-center py-4">🎉 Todo en orden</p>
                         )}
                     </div>

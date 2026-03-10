@@ -55,13 +55,8 @@ export async function POST(req: Request) {
         // ============================================================
         // 2. VENDEDOR
         // ============================================================
-        // En el texto aplanado, el vendedor aparece como:
-        // "...Domicilio Comercial: Razón Social: BONAVIA HILARIO MARCELO Condición frente al IVA:..."
+        // A pedido, dejamos el vendedor vacío para que el usuario lo complete manualmente
         let vendedorExtraido = "";
-        const vendorMatch = textoPlano.match(/Domicilio Comercial:\s*Raz[óo]n Social:\s*(.+?)(?:\s+Condici|\s+IVA|\s+FACTURA)/i);
-        if (vendorMatch) {
-            vendedorExtraido = vendorMatch[1].replace(/^[^a-zA-Z0-9]+/, '').replace(/[-:]+$/, '').trim();
-        }
 
         // ============================================================
         // 3. PRODUCTOS

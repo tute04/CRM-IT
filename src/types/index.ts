@@ -80,3 +80,15 @@ export interface Vendedor {
   email: string;
   created_at: string;
 }
+
+export interface Producto {
+  id: string;
+  negocio_id: string;
+  nombre: string;
+  precio_unitario: number;
+  stock_actual: number;
+  stock_minimo: number;
+  unidad: 'unidad' | 'kg' | 'm' | 'lt' | string;
+  created_at?: string;
+  updated_at?: string;
+}

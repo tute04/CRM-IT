@@ -41,17 +41,25 @@ export async function POST(req: Request) {
         // Obtener el negocio_id del external_reference o metadata
         const negocioId = payment.external_reference || (payment.metadata as any)?.negocio_id;
 
-        if (!negocioId) {
-            console.error('No negocio_id in payment:', paymentId);
-            return NextResponse.json({ error: 'No negocio_id' }, { status: 400 });
-        }
-
-        // Actualizar el plan del negocio usando service role (bypasses RLS)
         const supabaseAdmin = createSupabaseClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
 
+        if (!negocioId) {
+            console.error('No negocio_id in payment:', paymentId);
+            console.error('Full payment data:', JSON.stringify(payment));
+
+            await supabaseAdmin.from('pagos_sin_procesar').insert([{
+                payment_id: paymentId,
+                payment_data: payment
+            }]);
+
+            // Retornamos 200 de todas formas para que MP no reintente
+            return NextResponse.json({ error: 'No negocio_id, payment logged' }, { status: 200 });
+        }
+
+        // Actualizar el plan del negocio usando service role (bypasses RLS)
         const { error: updateError } = await supabaseAdmin
             .from('negocios')
             .update({

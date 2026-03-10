@@ -27,6 +27,7 @@ export default function ClientesPage() {
     const [fichaOpen, setFichaOpen] = useState<Cliente | null>(null);
     const [editCliente, setEditCliente] = useState<Cliente | null>(null);
     const [form, setForm] = useState({ nombre: '', telefono: '', email: '', direccion: '', rubro: '', notas: '', etiquetas: '' });
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const supabase = createClient();
     const { negocio } = useNegocio();
     const { toast } = useToast();
@@ -117,12 +118,17 @@ export default function ClientesPage() {
         fetchData();
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('¿Eliminar este cliente? Se eliminarán también sus ventas asociadas.')) return;
-        const { error } = await supabase.from('clientes').delete().eq('id', id);
-        if (error) { toast('Error al eliminar: ' + error.message, 'error'); return; }
+    const confirmDelete = (id: string) => {
+        setDeleteConfirmId(id);
+    };
+
+    const handleDelete = async () => {
+        if (!deleteConfirmId) return;
+        const { error } = await supabase.from('clientes').delete().eq('id', deleteConfirmId);
+        if (error) { toast('Error al eliminar: ' + error.message, 'error'); setDeleteConfirmId(null); return; }
         toast('Cliente eliminado');
         setFichaOpen(null);
+        setDeleteConfirmId(null);
         fetchData();
     };
 
@@ -416,13 +422,24 @@ export default function ClientesPage() {
                                 <button onClick={() => { setFichaOpen(null); openEditModal(fichaOpen); }} className="px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
                                     Editar
                                 </button>
-                                <button onClick={() => handleDelete(fichaOpen.id)} className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-500/20 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors ml-auto">
+                                <button onClick={() => confirmDelete(fichaOpen.id)} className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-500/20 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors ml-auto">
                                     Eliminar
                                 </button>
                             </div>
                         </div>
                     );
                 })()}
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal isOpen={!!deleteConfirmId} onClose={() => setDeleteConfirmId(null)} title="¿Eliminar cliente?">
+                <div className="space-y-4">
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">Esta acción no se puede deshacer. Se eliminarán permanentemente el cliente y todas sus ventas asociadas.</p>
+                    <div className="flex justify-end gap-2 pt-2">
+                        <button onClick={() => setDeleteConfirmId(null)} className="px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">Cancelar</button>
+                        <button onClick={handleDelete} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors">Eliminar</button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );

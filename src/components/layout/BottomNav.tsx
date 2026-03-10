@@ -42,6 +42,15 @@ const items = [
         ),
     },
     {
+        href: '/panel/inventario',
+        label: 'Inventario',
+        icon: (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+        ),
+    },
+    {
         href: '/panel/configuracion',
         label: 'Config.',
         icon: (
@@ -68,8 +77,8 @@ export default function BottomNav() {
                         key={item.href}
                         href={item.href}
                         className={`flex flex-col items-center gap-0.5 py-2 px-3 text-[10px] font-semibold transition-colors ${isActive(item.href)
-                                ? 'text-orange-500'
-                                : 'text-zinc-400 dark:text-zinc-500'
+                            ? 'text-orange-500'
+                            : 'text-zinc-400 dark:text-zinc-500'
                             }`}
                     >
                         <span className={isActive(item.href) ? 'text-orange-500' : ''}>{item.icon}</span>
