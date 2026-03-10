@@ -9,7 +9,6 @@ interface Props {
 }
 
 export default function DashboardStats({ ventas, clientes }: Props) {
-    // --- Calcular ventas mensuales reales (últimos 6 meses) ---
     const hoy = new Date();
     const mesesData = [];
     const nombresMeses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -34,18 +33,15 @@ export default function DashboardStats({ ventas, clientes }: Props) {
         });
     }
 
-    // --- Top 5 clientes por facturación ---
     const clienteStats = clientes.map(c => {
         const ventasCliente = ventas.filter(v => v.cliente_id === c.id);
         const total = ventasCliente.reduce((sum, v) => sum + (v.monto || 0), 0);
         return { nombre: c.nombre, total, compras: ventasCliente.length };
     }).sort((a, b) => b.total - a.total).slice(0, 5);
 
-    // --- Producto más vendido ---
     const productCount: Record<string, number> = {};
     ventas.forEach(v => {
         if (v.detalle) {
-            // Separar por " + " en caso de múltiples productos
             const prods = v.detalle.split(' + ');
             prods.forEach(p => {
                 const clean = p.trim().toUpperCase();
@@ -59,7 +55,6 @@ export default function DashboardStats({ ventas, clientes }: Props) {
         .sort(([, a], [, b]) => b - a)
         .slice(0, 3);
 
-    // --- Comparativa mes actual vs anterior ---
     const mesActual = hoy.getMonth();
     const anioActual = hoy.getFullYear();
     const ventasMesActual = ventas.filter(v => {
@@ -81,71 +76,73 @@ export default function DashboardStats({ ventas, clientes }: Props) {
 
     return (
         <div className="space-y-6">
-            {/* Gráfico de Ventas Mensuales */}
-            <div className="bg-white dark:bg-neutral-900 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-800 transition-colors duration-300">
+            {/* Chart */}
+            <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Facturación Mensual</h3>
-                    <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-black ${variacionPositiva ? 'bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400'}`}>
+                    <h3 className="text-base font-semibold text-zinc-900 dark:text-white">Facturación Mensual</h3>
+                    <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${variacionPositiva ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'}`}>
                         {variacionPositiva ? '↑' : '↓'} {variacion}% vs mes anterior
                     </div>
                 </div>
                 <div className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={mesesData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
-                            <XAxis dataKey="mes" stroke="#a3a3a3" fontWeight="bold" fontSize={12} />
-                            <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} stroke="#a3a3a3" fontWeight="bold" fontSize={12} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" />
+                            <XAxis dataKey="mes" stroke="#a1a1aa" fontWeight={500} fontSize={12} />
+                            <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} stroke="#a1a1aa" fontWeight={500} fontSize={12} />
                             <Tooltip
                                 formatter={(value: any) => [`$ ${Number(value).toLocaleString('es-AR')}`, 'Facturado']}
-                                cursor={{ fill: '#fef08a', opacity: 0.1 }}
-                                contentStyle={{ backgroundColor: '#171717', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 'bold' }}
+                                cursor={{ fill: '#f97316', opacity: 0.05 }}
+                                contentStyle={{ backgroundColor: '#18181b', color: '#fff', border: '1px solid #27272a', borderRadius: '8px', fontSize: '13px' }}
                             />
-                            <Bar dataKey="vendido" name="Facturado ($)" fill="#facc15" stroke="#171717" strokeWidth={1} radius={[8, 8, 0, 0]} />
+                            <Bar dataKey="vendido" name="Facturado ($)" fill="#f97316" radius={[6, 6, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Top 5 Clientes */}
-                <div className="bg-white dark:bg-neutral-900 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-800 transition-colors duration-300">
-                    <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight mb-4">🏆 Top 5 Clientes</h3>
+                {/* Top Clients */}
+                <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                    <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-4">Top 5 Clientes</h3>
                     <div className="space-y-3">
                         {clienteStats.length > 0 ? clienteStats.map((c, idx) => (
                             <div key={idx} className="flex items-center gap-3">
-                                <span className={`w-7 h-7 flex items-center justify-center rounded-full text-xs font-black ${idx === 0 ? 'bg-yellow-400 text-black' : idx === 1 ? 'bg-gray-300 dark:bg-neutral-600 text-black dark:text-white' : 'bg-neutral-200 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400'}`}>
+                                <span className={`w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-bold ${idx === 0 ? 'bg-orange-500 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}`}>
                                     {idx + 1}
                                 </span>
                                 <div className="flex-1 min-w-0">
-                                    <div className="font-bold text-gray-900 dark:text-white text-sm truncate">{c.nombre}</div>
-                                    <div className="text-xs text-gray-500 dark:text-neutral-500">{c.compras} compras</div>
+                                    <div className="font-medium text-zinc-900 dark:text-white text-sm truncate">{c.nombre}</div>
+                                    <div className="text-xs text-zinc-400">{c.compras} compras</div>
                                 </div>
-                                <span className="font-mono font-black text-yellow-600 dark:text-yellow-400 text-sm">
+                                <span className="font-mono font-semibold text-orange-600 dark:text-orange-400 text-sm">
                                     ${c.total.toLocaleString('es-AR')}
                                 </span>
                             </div>
                         )) : (
-                            <p className="text-gray-500 dark:text-neutral-500 text-sm">Sin datos de clientes aún</p>
+                            <p className="text-zinc-400 text-sm">Sin datos de clientes aún</p>
                         )}
                     </div>
                 </div>
 
-                {/* Productos Más Vendidos */}
-                <div className="bg-white dark:bg-neutral-900 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-800 transition-colors duration-300">
-                    <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight mb-4">📦 Productos Top</h3>
+                {/* Top Products */}
+                <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                    <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-4">Productos / Servicios Top</h3>
                     <div className="space-y-3">
                         {topProductos.length > 0 ? topProductos.map(([prod, count], idx) => (
                             <div key={idx} className="flex items-center gap-3">
-                                <span className="text-lg">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</span>
+                                <span className={`w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-bold ${idx === 0 ? 'bg-amber-500 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}`}>
+                                    {idx + 1}
+                                </span>
                                 <div className="flex-1 min-w-0">
-                                    <div className="font-bold text-gray-900 dark:text-white text-sm truncate">{prod}</div>
+                                    <div className="font-medium text-zinc-900 dark:text-white text-sm truncate">{prod}</div>
                                 </div>
-                                <span className="bg-neutral-100 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 text-xs font-black px-2 py-1 rounded-full">
-                                    {count}x vendido
+                                <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs font-medium px-2 py-0.5 rounded-full">
+                                    {count}x
                                 </span>
                             </div>
                         )) : (
-                            <p className="text-gray-500 dark:text-neutral-500 text-sm">Sin datos de productos aún</p>
+                            <p className="text-zinc-400 text-sm">Sin datos de productos aún</p>
                         )}
                     </div>
                 </div>

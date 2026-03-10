@@ -1,254 +1,171 @@
-'use client';
+import Link from 'next/link';
+import { createClient } from '@/utils/supabase-server';
+import { redirect } from 'next/navigation';
 
-import { useState, useEffect } from 'react';
-import FastEntryBar from '@/components/FastEntryBar';
-import ActionableTable from '@/components/ActionableTable';
-import DashboardStats from '@/components/DashboardStats';
-import CotizadorRapido from '@/components/CotizadorRapido';
-import DirectorioClientes from '@/components/DirectorioClientes';
-import { supabase } from '@/utils/supabase';
-import { Cliente, Venta } from '@/types';
+// SVG Icons as components
+const ChartIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>
+);
+const UsersIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+);
+const ZapIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+);
+const CheckIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+);
 
-export default function Home() {
-  const [tab, setTab] = useState<'OPERATIVO' | 'DIRECTORIO' | 'ESTADISTICAS'>('OPERATIVO');
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [ventas, setVentas] = useState<Venta[]>([]);
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [timeFilter, setTimeFilter] = useState<'SEMANA' | 'MES'>('SEMANA');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  useEffect(() => {
-    fetchData();
-
-    // Supabase Real-Time Subscriptions
-    const clientesSub = supabase.channel('public:clientes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'clientes' }, () => {
-        fetchData();
-      }).subscribe();
-
-    const ventasSub = supabase.channel('public:ventas')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'ventas' }, () => {
-        fetchData();
-      }).subscribe();
-
-    return () => {
-      supabase.removeChannel(clientesSub);
-      supabase.removeChannel(ventasSub);
-    };
-  }, []);
-
-  const fetchData = async () => {
-    const { data: cData } = await supabase.from('clientes').select('*');
-    if (cData) {
-      setClientes(cData.map(c => ({
-        id: c.id,
-        nombre: c.nombre,
-        telefono: c.telefono
-      })));
-    }
-    const { data: vData } = await supabase.from('ventas').select('*').order('fecha', { ascending: false });
-    if (vData) {
-      setVentas(vData.map(v => ({
-        id: v.id,
-        cliente_id: v.clienteId || v.cliente_id,
-        fecha: v.fecha,
-        detalle: v.detalleProducto || v.detalle_producto || v.detalle,
-        monto: v.montoFacturado || v.monto_facturado || v.monto,
-        vendedor: v.vendedor
-      })));
-    }
-  };
-
-  const handleAddData = async (c: Omit<Cliente, 'id'>) => {
-    const { data, error } = await supabase.from('clientes').insert([{
-      nombre: c.nombre,
-      telefono: c.telefono
-    }]).select().single();
-
-    if (error) {
-      console.error("Error Supabase Clientes:", error);
-      alert("Error al guardar cliente: " + error.message);
-      return undefined;
-    }
-
-    if (data) {
-      setClientes(prev => {
-        if (!prev.find(existing => existing.id === data.id)) return [...prev, data];
-        return prev;
-      });
-      return data.id as string;
-    }
-    return undefined;
-  };
-
-  const handleAddVenta = async (clienteId: string, detalleProducto: string, monto: number, vendedor: string) => {
-    const { data, error } = await supabase
-      .from('ventas')
-      .insert([{
-        cliente_id: clienteId,
-        detalle: detalleProducto,
-        monto: parseFloat(monto.toString()), // Force parsing explicitly
-        vendedor: vendedor
-      }])
-      .select().single();
-
-    if (error) {
-      console.error("Error Supabase Ventas:", error);
-      alert("Error al guardar la venta: " + error.message);
-      return;
-    }
-
-    if (data) {
-      fetchData(); // Reload safely to get ID mapping
-    }
-  };
-
-  const hoy = new Date();
-  const getWeekStart = (d: Date) => { const date = new Date(d); const day = date.getDay(); const diff = date.getDate() - day + (day === 0 ? -6 : 1); return new Date(date.setDate(diff)).toISOString().split('T')[0]; };
-  const getMonthStart = (d: Date) => { return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0]; };
-
-  const startOfWeek = getWeekStart(hoy);
-  const startOfMonth = getMonthStart(hoy);
-
-  const ventasSemana = ventas.filter(v => v.fecha >= startOfWeek);
-  const ventasMes = ventas.filter(v => v.fecha >= startOfMonth);
-
-  const totalFacturadoSemana = ventasSemana.reduce((acc, v) => acc + (v.monto || 0), 0);
-  const totalFacturadoMes = ventasMes.reduce((acc, v) => acc + (v.monto || 0), 0);
-
-  const facturadoActual = timeFilter === 'SEMANA' ? totalFacturadoSemana : totalFacturadoMes;
-  const cantidadVentasActual = timeFilter === 'SEMANA' ? ventasSemana.length : ventasMes.length;
-
-  // Ticket promedio
-  const ticketPromedio = cantidadVentasActual > 0 ? Math.round(facturadoActual / cantidadVentasActual) : 0;
+export default async function LandingPage() {
+  // If user is already logged in, redirect to panel
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) redirect('/panel');
 
   return (
-    <div className={isDarkMode ? 'dark' : ''}>
-      <main className="min-h-screen bg-gray-50 dark:bg-neutral-950 flex flex-col transition-colors duration-300">
-        <FastEntryBar
-          clientes={clientes}
-          ventas={ventas}
-          onAddData={handleAddData}
-          onAddServicio={handleAddVenta}
-          isDarkMode={isDarkMode}
-          setIsDarkMode={setIsDarkMode}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-        />
-
-        {/* Pestañas de Navegación con Iconos */}
-        <div className="w-full bg-white dark:bg-neutral-900 shadow-sm px-6 flex gap-1 justify-center border-b border-gray-200 dark:border-neutral-800 transition-colors duration-300">
-          <button
-            onClick={() => setTab('OPERATIVO')}
-            className={`flex items-center gap-2 px-6 py-4 font-bold uppercase tracking-wide transition-all border-b-4 ${tab === 'OPERATIVO' ? 'border-yellow-400 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-neutral-700'}`}
-          >
-            <span className="text-lg">📊</span> Panel de Ventas
-          </button>
-          <button
-            onClick={() => setTab('DIRECTORIO')}
-            className={`flex items-center gap-2 px-6 py-4 font-bold uppercase tracking-wide transition-all border-b-4 ${tab === 'DIRECTORIO' ? 'border-yellow-400 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-neutral-700'}`}
-          >
-            <span className="text-lg">👥</span> Directorio
-            <span className="bg-neutral-200 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400 text-[10px] font-black px-1.5 py-0.5 rounded-full">{clientes.length}</span>
-          </button>
-          <button
-            onClick={() => setTab('ESTADISTICAS')}
-            className={`flex items-center gap-2 px-6 py-4 font-bold uppercase tracking-wide transition-all border-b-4 ${tab === 'ESTADISTICAS' ? 'border-yellow-400 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-neutral-700'}`}
-          >
-            <span className="text-lg">📈</span> Estadísticas & Cotizador
-          </button>
+    <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+      {/* Nav */}
+      <nav className="fixed top-0 w-full bg-white/80 dark:bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-800 z-50">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></svg>
+            </div>
+            <span className="text-lg font-bold tracking-tight">ITIRIUM</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="/login" className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors px-4 py-2">
+              Iniciar Sesión
+            </Link>
+            <Link href="/registro" className="text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors">
+              Empezar Gratis
+            </Link>
+          </div>
         </div>
+      </nav>
 
-        <div className="flex-1 max-w-7xl w-full mx-auto p-6 flex flex-col gap-6">
-
-          {/* Métricas Cards con Glassmorphism y Hover Glow */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Clientes */}
-            <div className="group relative bg-white dark:bg-neutral-900 p-5 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm hover:shadow-lg hover:border-yellow-400/30 dark:hover:border-yellow-400/20 transition-all duration-300 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-yellow-400/10 dark:bg-yellow-400/5 flex items-center justify-center text-xl">👥</div>
-                <div>
-                  <h3 className="text-gray-500 dark:text-neutral-500 text-xs font-bold uppercase tracking-wider">Clientes</h3>
-                  <p className="text-2xl font-black text-gray-900 dark:text-white">{clientes.length}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Facturado */}
-            <div className="group relative bg-white dark:bg-neutral-900 p-5 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm hover:shadow-lg hover:shadow-yellow-400/5 hover:border-yellow-400/30 dark:hover:border-yellow-400/20 transition-all duration-300 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-yellow-400/10 dark:bg-yellow-400/5 flex items-center justify-center text-xl">💰</div>
-                <div>
-                  <h3 className="text-gray-500 dark:text-neutral-500 text-xs font-bold uppercase tracking-wider">Facturado <span className="text-[9px] text-gray-400 dark:text-neutral-600 normal-case">({timeFilter === 'SEMANA' ? 'semana' : 'mes'})</span></h3>
-                  <p className="text-2xl font-black text-yellow-500 dark:text-yellow-400">$ {facturadoActual.toLocaleString('es-AR')}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Ventas */}
-            <div className="group relative bg-white dark:bg-neutral-900 p-5 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm hover:shadow-lg hover:border-yellow-400/30 dark:hover:border-yellow-400/20 transition-all duration-300 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-yellow-400/10 dark:bg-yellow-400/5 flex items-center justify-center text-xl">🧾</div>
-                <div>
-                  <h3 className="text-gray-500 dark:text-neutral-500 text-xs font-bold uppercase tracking-wider">Ventas <span className="text-[9px] text-gray-400 dark:text-neutral-600 normal-case">({timeFilter === 'SEMANA' ? 'semana' : 'mes'})</span></h3>
-                  <p className="text-2xl font-black text-gray-900 dark:text-white">{cantidadVentasActual}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Ticket Promedio */}
-            <div className="group relative bg-white dark:bg-neutral-900 p-5 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm hover:shadow-lg hover:border-yellow-400/30 dark:hover:border-yellow-400/20 transition-all duration-300 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-yellow-400/10 dark:bg-yellow-400/5 flex items-center justify-center text-xl">📋</div>
-                <div>
-                  <h3 className="text-gray-500 dark:text-neutral-500 text-xs font-bold uppercase tracking-wider">Ticket Prom. <span className="text-[9px] text-gray-400 dark:text-neutral-600 normal-case">({timeFilter === 'SEMANA' ? 'semana' : 'mes'})</span></h3>
-                  <p className="text-2xl font-black text-gray-900 dark:text-white">$ {ticketPromedio.toLocaleString('es-AR')}</p>
-                </div>
-              </div>
-            </div>
+      {/* Hero */}
+      <section className="pt-32 pb-20 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 text-xs font-semibold px-3 py-1.5 rounded-full mb-8 border border-orange-200 dark:border-orange-500/20">
+            <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+            14 días gratis · Sin tarjeta de crédito
           </div>
 
-          {/* Filtro de tiempo flotante */}
-          <div className="flex justify-end -mt-2">
-            <div className="flex gap-1 bg-neutral-100 dark:bg-neutral-900 p-1 rounded-lg border border-gray-200 dark:border-neutral-800">
-              <button
-                onClick={() => setTimeFilter('SEMANA')}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${timeFilter === 'SEMANA' ? 'bg-yellow-400 text-black shadow-sm' : 'text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'}`}>
-                Esta Semana
-              </button>
-              <button
-                onClick={() => setTimeFilter('MES')}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${timeFilter === 'MES' ? 'bg-yellow-400 text-black shadow-sm' : 'text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'}`}>
-                Este Mes
-              </button>
-            </div>
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1] mb-6">
+            El CRM simple para<br />
+            <span className="bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
+              negocios que crecen
+            </span>
+          </h1>
+
+          <p className="text-lg md:text-xl text-zinc-500 dark:text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Gestioná clientes, registrá ventas y hacé seguimiento de tu negocio desde un solo lugar.
+            Diseñado para talleres, peluquerías, ferreterías y todo tipo de comercio.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/registro" className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-3.5 rounded-xl text-base transition-all hover:-translate-y-0.5 shadow-lg shadow-orange-500/25">
+              Empezar gratis →
+            </Link>
+            <Link href="/login" className="inline-flex items-center justify-center gap-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white font-semibold px-8 py-3.5 rounded-xl text-base transition-all">
+              Ya tengo cuenta
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-20 px-6 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight mb-4">Todo lo que necesitás para gestionar tu negocio</h2>
+            <p className="text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto">Sin complicaciones. Sin curva de aprendizaje. Empezá a vender en minutos.</p>
           </div>
 
-          {tab === 'OPERATIVO' ? (
-            <ActionableTable ventas={ventas} clientes={clientes} searchTerm={searchTerm} />
-          ) : tab === 'DIRECTORIO' ? (
-            <DirectorioClientes clientes={clientes} ventas={ventas} searchTerm={searchTerm} />
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <DashboardStats ventas={ventas} clientes={clientes} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="group bg-zinc-50 dark:bg-zinc-900 rounded-2xl p-8 border border-zinc-200 dark:border-zinc-800 hover:border-orange-300 dark:hover:border-orange-500/30 transition-all">
+              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-500/10 rounded-xl flex items-center justify-center text-orange-500 mb-5 group-hover:scale-110 transition-transform">
+                <UsersIcon />
               </div>
-              <div className="lg:col-span-1">
-                <CotizadorRapido clientes={clientes} />
-              </div>
+              <h3 className="text-lg font-bold mb-2">Directorio de Clientes</h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                Base de datos completa con historial de compras, alertas de seguimiento y contacto rápido por WhatsApp.
+              </p>
             </div>
-          )}
-        </div>
 
-        {/* Footer sutil */}
-        <footer className="text-center py-4 text-[10px] font-bold text-gray-400 dark:text-neutral-700 uppercase tracking-widest">
-          Neumáticos Bonavia · CRM v2.0 · {new Date().getFullYear()}
-        </footer>
-      </main>
+            <div className="group bg-zinc-50 dark:bg-zinc-900 rounded-2xl p-8 border border-zinc-200 dark:border-zinc-800 hover:border-orange-300 dark:hover:border-orange-500/30 transition-all">
+              <div className="w-12 h-12 bg-amber-100 dark:bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500 mb-5 group-hover:scale-110 transition-transform">
+                <ChartIcon />
+              </div>
+              <h3 className="text-lg font-bold mb-2">Panel de Estadísticas</h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                Facturación mensual, ticket promedio, top clientes y productos más vendidos. Todo en tiempo real.
+              </p>
+            </div>
+
+            <div className="group bg-zinc-50 dark:bg-zinc-900 rounded-2xl p-8 border border-zinc-200 dark:border-zinc-800 hover:border-orange-300 dark:hover:border-orange-500/30 transition-all">
+              <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 mb-5 group-hover:scale-110 transition-transform">
+                <ZapIcon />
+              </div>
+              <h3 className="text-lg font-bold mb-2">Carga Inteligente</h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                Subí facturas en PDF y la IA extrae los datos automáticamente. Registrá ventas en segundos.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section className="py-20 px-6 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
+        <div className="max-w-lg mx-auto text-center">
+          <h2 className="text-3xl font-bold tracking-tight mb-4">Un plan simple</h2>
+          <p className="text-zinc-500 dark:text-zinc-400 mb-12">Sin trucos. Todo incluido.</p>
+
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-8 shadow-sm">
+            <div className="text-sm font-semibold text-orange-500 mb-2">PLAN PRO</div>
+            <div className="flex items-baseline justify-center gap-1 mb-6">
+              <span className="text-5xl font-extrabold">${process.env.NEXT_PUBLIC_PRECIO_MENSUAL || '5.000'}</span>
+              <span className="text-zinc-500 text-sm font-medium">/mes</span>
+            </div>
+
+            <ul className="space-y-3 text-left mb-8">
+              {[
+                'Clientes y ventas ilimitados',
+                'Panel de estadísticas completo',
+                'Carga de facturas con IA',
+                'Presupuestos PDF profesionales',
+                'Datos 100% aislados y seguros',
+                'Soporte por WhatsApp',
+              ].map((feature) => (
+                <li key={feature} className="flex items-center gap-3 text-sm text-zinc-600 dark:text-zinc-400">
+                  <span className="text-orange-500 flex-shrink-0"><CheckIcon /></span>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+
+            <Link href="/registro" className="block w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl transition-colors text-center">
+              Empezar 14 días gratis
+            </Link>
+            <p className="text-xs text-zinc-400 mt-3">Sin tarjeta de crédito · Cancelá cuando quieras</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-8 px-6 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-indigo-500 rounded-md flex items-center justify-center">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></svg>
+            </div>
+            <span className="text-sm font-semibold">ITIRIUM</span>
+          </div>
+          <p className="text-xs text-zinc-400">© {new Date().getFullYear()} ITIRIUM. El CRM simple para negocios que crecen.</p>
+        </div>
+      </footer>
     </div>
   );
 }

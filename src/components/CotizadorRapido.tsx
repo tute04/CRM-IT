@@ -12,9 +12,10 @@ interface Cotizacion {
 
 interface Props {
     clientes?: Cliente[]; // Make it optional for fallback protection
+    negocioNombre?: string;
 }
 
-export default function CotizadorRapido({ clientes = [] }: Props) {
+export default function CotizadorRapido({ clientes = [], negocioNombre }: Props) {
     const [medida, setMedida] = useState('');
     const [loading, setLoading] = useState(false);
     const [resultados, setResultados] = useState<Cotizacion[]>([]);
@@ -73,7 +74,7 @@ export default function CotizadorRapido({ clientes = [] }: Props) {
             doc.setFontSize(22);
             doc.setFont("helvetica", "bold");
             doc.setTextColor(40, 40, 40);
-            doc.text("NEUMÁTICOS BONAVIA", 14, 25);
+            doc.text((negocioNombre || 'Mi Negocio').toUpperCase(), 14, 25);
 
             doc.setFontSize(10);
             doc.setFont("helvetica", "normal");
@@ -168,7 +169,7 @@ export default function CotizadorRapido({ clientes = [] }: Props) {
             doc.text("- Sujeto a disponibilidad de stock al momento de confirmar la compra.", 14, finalY + 35);
 
             // --- 7. GUARDAR ---
-            doc.save(`Presupuesto_Bonavia_${fechaActual.replace(/\//g, '-')}.pdf`);
+            doc.save(`Presupuesto_${(negocioNombre || 'CRM').replace(/\s+/g, '_')}_${fechaActual.replace(/\//g, '-')}.pdf`);
         } catch (error) {
             console.error("Error generando PDF:", error);
             alert("Hubo un error al generar el documento.");

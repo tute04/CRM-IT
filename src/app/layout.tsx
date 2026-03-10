@@ -1,10 +1,10 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { NegocioProvider } from '@/contexts/NegocioContext';
 
 export const metadata: Metadata = {
-  // ACÁ CAMBIAMOS EL TÍTULO DE LA PESTAÑA:
-  title: 'Neumáticos Bonavia | CRM',
-  description: 'Sistema de gestión rápida de clientes y vehículos',
+  title: 'ITIRIUM | El CRM simple para negocios que crecen',
+  description: 'Gestioná clientes, ventas y cobros desde un solo lugar. 14 días gratis, sin tarjeta.',
 };
 
 export default function RootLayout({
@@ -13,8 +13,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
-      <body className="antialiased bg-gray-100">{children}</body>
+    <html lang="es" suppressHydrationWarning>
+      <body className="antialiased">
+        <NegocioProvider>
+          {children}
+        </NegocioProvider>
+      </body>
     </html>
   );
 }

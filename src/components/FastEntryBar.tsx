@@ -13,9 +13,11 @@ interface Props {
     setIsDarkMode: (val: boolean) => void;
     searchTerm: string;
     setSearchTerm: (val: string) => void;
+    negocioNombre?: string;
+    onLogout?: () => void;
 }
 
-export default function FastEntryBar({ clientes, ventas, onAddData, onAddServicio, isDarkMode, setIsDarkMode, searchTerm, setSearchTerm }: Props) {
+export default function FastEntryBar({ clientes, ventas, onAddData, onAddServicio, isDarkMode, setIsDarkMode, searchTerm, setSearchTerm, negocioNombre, onLogout }: Props) {
     const [modalOpen, setModalOpen] = useState(false);
     const [dropzoneModalOpen, setDropzoneModalOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -23,29 +25,17 @@ export default function FastEntryBar({ clientes, ventas, onAddData, onAddServici
     const suggestions = React.useMemo(() => {
         if (searchTerm.trim().length === 0) return [];
         const busqueda = searchTerm.toLowerCase();
+        const hints: { label: string, value: string, type: string }[] = [];
 
-        const hints: { label: string, value: string }[] = [];
+        clientes.filter(c => c.nombre.toLowerCase().includes(busqueda)).slice(0, 3)
+            .forEach(c => hints.push({ label: c.nombre, value: c.nombre, type: 'Cliente' }));
 
-        // Clientes matching
-        const matchesClientes = clientes.filter(c => c.nombre.toLowerCase().includes(busqueda)).slice(0, 3);
-        matchesClientes.forEach(c => hints.push({ label: `👤 Cliente: ${c.nombre}`, value: c.nombre }));
-
-        // Vendedores matching
         const vendors = Array.from(new Set(ventas.map(v => v.vendedor).filter(Boolean))) as string[];
-        const matchesVendedores = vendors.filter(v => v.toLowerCase().includes(busqueda)).slice(0, 3);
-        matchesVendedores.forEach(v => hints.push({ label: `💼 Vendedor: ${v}`, value: v }));
-
-        // Añadimos fechas también si alguien busca un año 
-        const matchesFechas = Array.from(new Set(ventas.map(v => v.fecha))).filter(f => f.includes(busqueda)).slice(0, 2);
-        matchesFechas.forEach(f => hints.push({ label: `📅 Fecha: ${f}`, value: f }));
+        vendors.filter(v => v.toLowerCase().includes(busqueda)).slice(0, 2)
+            .forEach(v => hints.push({ label: v, value: v, type: 'Vendedor' }));
 
         return hints;
     }, [searchTerm, clientes, ventas]);
-
-    const handleSelectSuggestion = (value: string) => {
-        setSearchTerm(value);
-        setIsDropdownOpen(false);
-    };
 
     const [extractedData, setExtractedData] = useState<any>(null);
 
@@ -57,19 +47,22 @@ export default function FastEntryBar({ clientes, ventas, onAddData, onAddServici
 
     return (
         <>
-            <div className="bg-white dark:bg-neutral-900 w-full p-4 shadow-sm border-b border-gray-200 dark:border-neutral-800 flex items-center justify-between transition-colors duration-300">
-                <div className="flex items-center gap-4 mr-8">
-                    <div className="text-gray-900 dark:text-white font-bold tracking-tight flex flex-col leading-none">
-                        <span className="text-sm text-yellow-500 dark:text-yellow-400 font-bold mb-1">NEUMÁTICOS</span>
-                        <span className="text-3xl font-black leading-none">BONAVIA<span className="text-yellow-500 text-sm align-top ml-1">CRM</span></span>
+            <header className="bg-white dark:bg-zinc-900 w-full px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                {/* Left: Logo + Business name */}
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></svg>
                     </div>
-                    <button type="button" onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 ml-4 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 transition-colors text-xl shadow-inner">
-                        {isDarkMode ? '🌙' : '☀️'}
-                    </button>
+                    <div className="flex flex-col leading-tight">
+                        <span className="text-base font-bold text-zinc-900 dark:text-white tracking-tight">{negocioNombre || 'Mi Negocio'}</span>
+                        <span className="text-[10px] text-zinc-400 font-medium tracking-wider uppercase">ITIRIUM CRM</span>
+                    </div>
                 </div>
 
-                <div className="flex-1 flex justify-end items-center gap-4 max-w-3xl">
+                {/* Center: Search */}
+                <div className="flex-1 max-w-md mx-6">
                     <div className="relative">
+                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
                         <input
                             type="text"
                             value={searchTerm}
@@ -79,42 +72,72 @@ export default function FastEntryBar({ clientes, ventas, onAddData, onAddServici
                             }}
                             onFocus={() => setIsDropdownOpen(true)}
                             onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-                            placeholder="🔎 Buscar cliente, vendedor o fecha (Ej: Mateo, Tute, 2026)..."
-                            className="bg-neutral-900 border border-neutral-800 text-white px-4 py-2 rounded-lg w-[32rem] focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400 transition-colors shadow-sm"
+                            placeholder="Buscar cliente, vendedor..."
+                            className="w-full pl-10 pr-4 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-lg focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all text-sm"
                         />
                         {isDropdownOpen && suggestions.length > 0 && (
-                            <ul className="absolute mt-1 w-full bg-neutral-900 border border-neutral-800 rounded-lg shadow-2xl z-50 overflow-hidden divide-y divide-neutral-800">
+                            <ul className="absolute mt-1 w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-lg z-50 overflow-hidden">
                                 {suggestions.map((sug, i) => (
                                     <li
                                         key={i}
-                                        onClick={() => handleSelectSuggestion(sug.value)}
-                                        className="px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-neutral-800 cursor-pointer transition-colors"
+                                        onClick={() => { setSearchTerm(sug.value); setIsDropdownOpen(false); }}
+                                        className="px-3 py-2.5 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer flex items-center justify-between"
                                     >
-                                        {sug.label}
+                                        <span>{sug.label}</span>
+                                        <span className="text-xs text-zinc-400 font-medium">{sug.type}</span>
                                     </li>
                                 ))}
                             </ul>
                         )}
                     </div>
+                </div>
+
+                {/* Right: Actions */}
+                <div className="flex items-center gap-2">
                     <button
                         type="button"
                         onClick={() => setDropzoneModalOpen(true)}
-                        className={`border border-yellow-400 text-yellow-500 hover:bg-yellow-400 hover:text-black font-black px-6 py-2 rounded-lg shadow-lg transition-colors uppercase tracking-wide whitespace-nowrap flex items-center justify-center min-w-[180px]`}
+                        className="inline-flex items-center gap-1.5 border border-zinc-200 dark:border-zinc-700 hover:border-orange-300 dark:hover:border-orange-500/30 text-zinc-700 dark:text-zinc-300 hover:text-orange-600 dark:hover:text-orange-400 font-medium px-3.5 py-2 rounded-lg transition-all text-sm"
                     >
-                        📥 Subir Factura
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+                        Subir Factura
                     </button>
                     <button
                         type="button"
-                        onClick={() => {
-                            setExtractedData(null); // Clean previous extractions
-                            setModalOpen(true);
-                        }}
-                        className="bg-yellow-400 hover:bg-yellow-500 text-black font-black px-6 py-2 rounded-lg shadow-lg transition-colors uppercase tracking-wide whitespace-nowrap"
+                        onClick={() => { setExtractedData(null); setModalOpen(true); }}
+                        className="inline-flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white font-medium px-3.5 py-2 rounded-lg transition-colors text-sm"
                     >
-                        ➕ Cargar Venta
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                        Nueva Venta
                     </button>
+
+                    <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-1" />
+
+                    <button
+                        type="button"
+                        onClick={() => setIsDarkMode(!isDarkMode)}
+                        className="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        title={isDarkMode ? 'Modo claro' : 'Modo oscuro'}
+                    >
+                        {isDarkMode ? (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></svg>
+                        ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
+                        )}
+                    </button>
+
+                    {onLogout && (
+                        <button
+                            type="button"
+                            onClick={onLogout}
+                            className="p-2 rounded-lg text-zinc-500 hover:text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                            title="Cerrar sesión"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+                        </button>
+                    )}
                 </div>
-            </div>
+            </header>
 
             <FastEntryModal
                 clienteSearchTerm=""
@@ -128,13 +151,16 @@ export default function FastEntryBar({ clientes, ventas, onAddData, onAddServici
             />
 
             {dropzoneModalOpen && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 transition-all duration-300">
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col transition-colors duration-300">
-                        <div className="bg-neutral-950 p-5 flex justify-between items-center border-b border-neutral-800 transition-colors duration-300">
-                            <h3 className="text-white font-bold text-lg tracking-wide uppercase flex items-center gap-2">
-                                <span className="text-2xl">🪄</span> Carga de Recibo Mágica
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+                    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl w-full max-w-xl">
+                        <div className="p-5 flex justify-between items-center border-b border-zinc-200 dark:border-zinc-800">
+                            <h3 className="text-zinc-900 dark:text-white font-semibold text-base flex items-center gap-2">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+                                Cargar Factura
                             </h3>
-                            <button onClick={() => setDropzoneModalOpen(false)} className="text-neutral-400 hover:text-yellow-400 font-bold text-2xl transition-colors duration-300 ease-out leading-none">&times;</button>
+                            <button onClick={() => setDropzoneModalOpen(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white transition-colors">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                            </button>
                         </div>
                         <div className="p-8">
                             <InvoiceDropzone onExtracted={handleExtracted} clientes={clientes} />
