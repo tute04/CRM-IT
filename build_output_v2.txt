@@ -1,0 +1,105 @@
+﻿Ôû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+node.exe : ÔÜá The 
+"middleware" file convention 
+is deprecated. Please use 
+"proxy" instead. Learn more: h
+ttps://nextjs.org/docs/message
+s/middleware-to-proxy
+En línea: 1 Carácter: 1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo          : 
+    NotSpecified: (ÔÜá The "  
+  middle...leware-to-proxy:   
+ String) [], RemoteExcepti    
+on
+    + FullyQualifiedErrorId : 
+    NativeCommandError
+ 
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 11.0s
+  Running TypeScript ...
+Failed to compile.
+
+./src/app/panel/page.tsx:204:3
+7
+Type error: Type '(value: 
+number) => [string, "Total"]' 
+is not assignable to type 
+'Formatter<number, "Total"> & 
+((value: number, name: 
+"Total", item: 
+Payload<number, "Total">, 
+index: number, payload: 
+Payload<number, "Total">[]) 
+=> ReactNode | [...])'.
+  Type '(value: number) => 
+[string, "Total"]' is not 
+assignable to type 
+'Formatter<number, "Total">'.
+    Types of parameters 
+'value' and 'value' are 
+incompatible.
+      Type 'number | 
+undefined' is not assignable 
+to type 'number'.
+        Type 'undefined' is 
+not assignable to type 
+'number'.
+
+[0m [90m 202 |[39m         
+                        
+[33m<[39m[33mTooltip[39m
+ [90m 203 |[39m             
+                        
+contentStyle[33m=[39m{{ 
+background[33m:[39m [32m'#1
+8181b'[39m[33m,[39m 
+border[33m:[39m [32m'1px 
+solid 
+#27272a'[39m[33m,[39m 
+borderRadius[33m:[39m 
+[32m'8px'[39m[33m,[39m 
+fontSize[33m:[39m 
+[32m'12px'[39m[33m,[39m 
+color[33m:[39m 
+[32m'#fff'[39m }}
+[31m[1m>[22m[39m[90m 204 
+|[39m                        
+             formatter[33m=[
+39m{(value[33m:[39m number) 
+[33m=>[39m [formatCurrency(v
+alue)[33m,[39m 
+[32m'Total'[39m]}
+ [90m     |[39m             
+                        
+[31m[1m^[22m[39m
+ [90m 205 |[39m             
+                        labelF
+ormatter[33m=[39m{(label[33
+m:[39m string) [33m=>[39m 
+[32m`D├¡a 
+${label.slice(8)}`[39m}
+ [90m 206 |[39m             
+                    
+[33m/[39m[33m>[39m
+ [90m 207 |[39m             
+                    
+[33m<[39m[33mBar[39m dataK
+ey[33m=[39m[32m"total"[39m
+ fill[33m=[39m[32m"#f97316"
+[39m radius[33m=[39m{[[35m
+4[39m[33m,[39m 
+[35m4[39m[33m,[39m 
+[35m0[39m[33m,[39m 
+[35m0[39m]} 
+[33m/[39m[33m>[39m[0m
+Next.js build worker exited 
+with code: 1 and signal: null

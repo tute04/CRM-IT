@@ -1,0 +1,2 @@
+src/app/panel/clientes/page.tsx(269,97): error TS18048: 'c.etiquetas' is possibly 'undefined'.
+src/app/panel/clientes/page.tsx(375,74): error TS18048: 'fichaOpen.etiquetas' is possibly 'undefined'.

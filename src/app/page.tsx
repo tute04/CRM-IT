@@ -158,7 +158,7 @@ export default async function LandingPage() {
       <footer className="py-8 px-6 border-t border-zinc-200 dark:border-zinc-800">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-indigo-500 rounded-md flex items-center justify-center">
+            <div className="w-6 h-6 bg-orange-500 rounded-md flex items-center justify-center">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></svg>
             </div>
             <span className="text-sm font-semibold">ITIRIUM</span>

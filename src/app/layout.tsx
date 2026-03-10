@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { NegocioProvider } from '@/contexts/NegocioContext';
+import { ToastProvider } from '@/contexts/ToastContext';
 
 export const metadata: Metadata = {
   title: 'ITIRIUM | El CRM simple para negocios que crecen',
@@ -16,7 +17,9 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className="antialiased">
         <NegocioProvider>
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </NegocioProvider>
       </body>
     </html>

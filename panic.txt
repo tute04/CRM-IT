@@ -1,0 +1,56 @@
+﻿---------------------------
+Failed to write app endpoint /panel/page
+
+Caused by:
+- [project]/src/app/globals.css [app-client] (css)
+- failed to write to C:\Users\mateb\Desktop\CRM B - copia\.next\dev\build\chunks\[turbopack-node]_transforms_postcss_ts_6920245c._.js
+- El proceso no tiene acceso al archivo porque estÃ¡ siendo utilizado por otro proceso. (os error 32)
+
+Debug info:
+- Execution of get_written_endpoint_with_issues_operation failed
+- Execution of endpoint_write_to_disk failed
+- Execution of <AppEndpoint as Endpoint>::output failed
+- Failed to write app endpoint /panel/page
+- Execution of AppEndpoint::output failed
+- Execution of AppProject::app_module_graphs failed
+- Execution of *<AppEndpoint as Endpoint>::additional_entries failed
+- Execution of *ModuleGraph::from_graphs failed
+- Execution of SingleModuleGraph::new_with_entries_visited_intern failed
+- [project]/src/app/globals.css [app-client] (css)
+- Execution of primary_chunkable_referenced_modules failed
+- Execution of <CssModuleAsset as Module>::references failed
+- Execution of parse_css failed
+- Execution of <PostCssTransformedAsset as Asset>::content failed
+- Execution of PostCssTransformedAsset::process failed
+- Execution of evaluate_webpack_loader failed
+- Execution of get_evaluate_pool failed
+- failed to write to C:\Users\mateb\Desktop\CRM B - copia\.next\dev\build\chunks\[turbopack-node]_transforms_postcss_ts_6920245c._.js
+- El proceso no tiene acceso al archivo porque estÃ¡ siendo utilizado por otro proceso. (os error 32)
+---------------------------
+Failed to write app endpoint /page
+
+Caused by:
+- [project]/src/app/globals.css [app-client] (css)
+- failed to write to C:\Users\mateb\Desktop\CRM B - copia\.next\dev\build\chunks\[turbopack-node]_transforms_postcss_ts_6920245c._.js
+- El proceso no tiene acceso al archivo porque estÃ¡ siendo utilizado por otro proceso. (os error 32)
+
+Debug info:
+- Execution of get_written_endpoint_with_issues_operation failed
+- Execution of endpoint_write_to_disk failed
+- Execution of <AppEndpoint as Endpoint>::output failed
+- Failed to write app endpoint /page
+- Execution of AppEndpoint::output failed
+- Execution of AppProject::app_module_graphs failed
+- Execution of *<AppEndpoint as Endpoint>::additional_entries failed
+- Execution of *ModuleGraph::from_graphs failed
+- Execution of SingleModuleGraph::new_with_entries_visited_intern failed
+- [project]/src/app/globals.css [app-client] (css)
+- Execution of primary_chunkable_referenced_modules failed
+- Execution of <CssModuleAsset as Module>::references failed
+- Execution of parse_css failed
+- Execution of <PostCssTransformedAsset as Asset>::content failed
+- Execution of PostCssTransformedAsset::process failed
+- Execution of evaluate_webpack_loader failed
+- Execution of get_evaluate_pool failed
+- failed to write to C:\Users\mateb\Desktop\CRM B - copia\.next\dev\build\chunks\[turbopack-node]_transforms_postcss_ts_6920245c._.js
+- El proceso no tiene acceso al archivo porque estÃ¡ siendo utilizado por otro proceso. (os error 32)
