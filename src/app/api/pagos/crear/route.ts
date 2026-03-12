@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
         const preference = new Preference(mpClient);
 
-        const precioMensual = parseFloat(process.env.PRECIO_MENSUAL_ARS || '5000');
+        const precioMensual = parseFloat(process.env.PRECIO_MENSUAL_ARS || '8990'); // API fallback
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
         const result = await preference.create({

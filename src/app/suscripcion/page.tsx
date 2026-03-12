@@ -84,7 +84,7 @@ export default function SuscripcionPage() {
                                 <div className="text-center mb-5">
                                     <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Plan Mensual</span>
                                     <div className="mt-2 flex items-baseline justify-center gap-0.5">
-                                        <span className="text-4xl font-extrabold text-zinc-900 dark:text-white">${process.env.NEXT_PUBLIC_PRECIO_MENSUAL || '5.000'}</span>
+                                        <span className="text-4xl font-extrabold text-zinc-900 dark:text-white">${process.env.NEXT_PUBLIC_PRECIO_MENSUAL || '8.990'}</span>
                                         <span className="text-zinc-500 text-sm font-medium">/mes</span>
                                     </div>
                                 </div>
