@@ -94,14 +94,19 @@ export async function POST(req: Request) {
               response_format: { type: "json_object" },
               messages: [{
                 role: "system",
-                content: `Eres un consultor de ventas experto para ITrium CRM. 
+                content: `Eres un consultor de ventas experto para ITrium CRM (itrium.com.ar). 
                 Debes analizar los datos de un negocio y devolver un JSON con:
                 {
-                  "propuesta": "mensaje de whatsapp hiper-personalizado",
+                  "propuesta": "mensaje de whatsapp hiper-personalizado que incluya el link itrium.com.ar para que el cliente lo pruebe gratis",
                   "score": número del 1 al 10,
                   "motivo": "breve explicación del score"
                 }
-                Si el negocio NO tiene web, el score sube (+2). Si tiene mala puntuación, el score sube (+1) porque necesitan gestión.`
+                REGLAS DE ORO PARA LA PROPUESTA:
+                1. Sé muy breve y directo (máximo 3 párrafos cortos).
+                2. No pidas permiso para hablar, ofrece una solución.
+                3. Incluye siempre itrium.com.ar mencionando que tienen 7 días de prueba GRATIS.
+                4. Si el negocio no tiene web, menciona que ITrium les ayuda a profesionalizarse.
+                Si el negocio NO tiene web, el score sube (+2). Si tiene mala puntuación, el score sube (+1).`
               }, {
                 role: "user",
                 content: `Negocio: ${place.title}. Nicho: ${nicho}. Rating: ${place.rating}. Web: ${place.website || 'No tiene'}. 
