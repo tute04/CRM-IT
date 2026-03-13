@@ -94,23 +94,39 @@ export async function POST(req: Request) {
               response_format: { type: "json_object" },
               messages: [{
                 role: "system",
-                content: `Eres un consultor de ventas experto para ITrium CRM (itrium.com.ar). 
-                Debes analizar los datos de un negocio y devolver un JSON con:
+                content: `Eres un experto vendedor de ITrium (itrium.com.ar), un CRM diseñado para simplificar la vida de negocios en Argentina. 
+                Tu objetivo es escribir un mensaje de WhatsApp para el dueño de un negocio que acabo de encontrar en Google Maps.
+                
+                REGLAS DE ORO DEL MENSAJE:
+                1. TONO: Argentino nativo (tuteo: "Hola! Cómo estás?", "Che, vi tu negocio..."), cálido, profesional pero no acartonado.
+                2. ESTRUCTURA: 
+                   - Saludo personalizado con el nombre del negocio.
+                   - "Vi tu perfil en Google Maps": Menciona algo específico (sus estrellas, sus reseñas o que NO tienen web).
+                   - El Problema: "Sé que gestionar [Nicho] toma mucho tiempo con papeles o mensaje de WhatsApp sueltos".
+                   - La Solución: ITrium ayuda a automatizar ventas, stock y clientes.
+                   - CTA Claro: "Te dejo para que te crees una cuenta y lo pruebes gratis por 7 días: itrium.com.ar"
+                3. FORMATO: Usa emojis y negritas de WhatsApp (asteriscos). Sé breve (máximo 3 párrafos cortos).
+                
+                Devuelve un JSON con:
                 {
-                  "propuesta": "mensaje de whatsapp hiper-personalizado que incluya el link itrium.com.ar para que el cliente lo pruebe gratis",
-                  "score": número del 1 al 10,
-                  "motivo": "breve explicación del score"
+                  "propuesta": "el mensaje de whatsapp completo",
+                  "score": número del 1 al 10 (basado en qué tanto necesitan el CRM),
+                  "motivo": "breve explicación de por qué ese score"
                 }
-                REGLAS DE ORO PARA LA PROPUESTA:
-                1. Sé muy breve y directo (máximo 3 párrafos cortos).
-                2. No pidas permiso para hablar, ofrece una solución.
-                3. Incluye siempre itrium.com.ar mencionando que tienen 7 días de prueba GRATIS.
-                4. Si el negocio no tiene web, menciona que ITrium les ayuda a profesionalizarse.
-                Si el negocio NO tiene web, el score sube (+2). Si tiene mala puntuación, el score sube (+1).`
+                
+                CALIBRACIÓN DE SCORE:
+                - Sin web: +2 puntos.
+                - Buen rating (poca gestión de clientes): +1 punto.
+                - Rubro complejo (Talleres, Distribuidoras): +2 puntos.`
               }, {
                 role: "user",
-                content: `Negocio: ${place.title}. Nicho: ${nicho}. Rating: ${place.rating}. Web: ${place.website || 'No tiene'}. 
-                Contenido extraído web (si hay): ${contenidoWeb.substring(0, 500)}`
+                content: `DATOS DEL PROSPECTO:
+                Nombre: ${place.title}. 
+                Rubro: ${nicho}. 
+                Ciudad: ${ciudad}.
+                Google Rating: ${place.rating} estrellas (${place.ratingCount} reseñas). 
+                Web: ${place.website || 'NO TIENE (Oportunidad de Oro)'}. 
+                Contenido detectado en su web (si hay): ${contenidoWeb.substring(0, 400)}`
               }]
             })
           });
