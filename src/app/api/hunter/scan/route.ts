@@ -55,13 +55,22 @@ export async function POST(req: Request) {
     
     for (const place of places.slice(0, 4)) { // 4 por vez para balancear velocidad
       let contenidoWeb = "";
+      let emailEncontrado = "";
       
-      // Módulo "Ojo Mágico": Scraping básico si tiene web
       if (place.website) {
         try {
           const webResp = await fetch(place.website, { signal: AbortSignal.timeout(3000) });
           const html = await webResp.text();
-          // Extraemos solo texto plano básico (primeros 2000 caracteres)
+          
+          // 1. Extraer Email con Regex
+          const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi;
+          const emails = html.match(emailRegex);
+          if (emails && emails.length > 0) {
+            // Filtrar falsos positivos comunes
+            emailEncontrado = emails.find(e => !e.endsWith('.png') && !e.endsWith('.jpg') && !e.includes('sentry')) || "";
+          }
+
+          // 2. Extraer Texto Plano
           contenidoWeb = html.replace(/<[^>]*>?/gm, ' ').substring(0, 2000).trim();
         } catch (e) {
           console.warn(`No se pudo scrapear ${place.website}`);
@@ -117,6 +126,7 @@ export async function POST(req: Request) {
         nicho: nicho,
         sitio_web: place.website || '',
         telefono: place.phoneNumber || '',
+        email: emailEncontrado,
         metadata: { 
           rating: place.rating, 
           reviews: place.ratingCount,

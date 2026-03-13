@@ -371,21 +371,33 @@ export default function LeadHunterPage() {
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2 block">Nichos de Mercado</label>
-                <div className="flex flex-wrap gap-2">
-                  {['Ferreterías', 'Talleres', 'Peluquerías', 'Pinturerías'].map(tag => (
-                    <span 
-                      key={tag} 
-                      onClick={() => setTargetNicho(tag)}
-                      className={`px-3 py-1 border rounded-lg text-sm font-medium cursor-pointer transition-all ${
-                        targetNicho === tag 
-                        ? 'bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-500/20' 
-                        : 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/20'
-                      }`}
-                    >
-                      {tag}
-                    </span>
-                  ))}
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2 block">Rubro / Nicho de Mercado</label>
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                    <input 
+                      type="text"
+                      className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none dark:text-white"
+                      placeholder="Ej: Ferreterías, Talleres, Gimnasios..."
+                      value={targetNicho}
+                      onChange={(e) => setTargetNicho(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {['Ferreterías', 'Talleres', 'Peluquerías', 'Gimnasios', 'Restaurantes', 'Veterinarias'].map(tag => (
+                      <button 
+                        key={tag} 
+                        onClick={() => setTargetNicho(tag)}
+                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all border ${
+                          targetNicho === tag 
+                          ? 'bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-500/10' 
+                          : 'bg-zinc-100 dark:bg-zinc-800 border-transparent text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
