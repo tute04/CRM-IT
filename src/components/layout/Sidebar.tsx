@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useNegocio } from '@/contexts/NegocioContext';
 import Logo from '@/components/ui/Logo';
+import { createClient } from '@/utils/supabase-client';
+
+const ADMIN_EMAIL = 'matebonavia@gmail.com';
 
 const navItems = [
     {
@@ -78,6 +81,19 @@ const bottomItems = [
 export default function Sidebar({ onLogout }: { onLogout: () => void }) {
     const pathname = usePathname();
     const { negocio } = useNegocio();
+    const [userEmail, setUserEmail] = React.useState<string | null>(null);
+    const supabase = createClient();
+
+    React.useEffect(() => {
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUserEmail(user?.email || null);
+        };
+        getUser();
+    }, []);
+
+    const isHunterVisible = userEmail === ADMIN_EMAIL;
+
 
     const isActive = (href: string) => {
         if (href === '/panel') return pathname === '/panel';
@@ -108,6 +124,23 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
                         {item.label}
                     </Link>
                 ))}
+
+                {isHunterVisible && (
+                    <Link
+                        href="/panel/hunter"
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${isActive('/panel/hunter')
+                            ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-500 border-l-[3px] border-orange-500 pl-[9px]'
+                            : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+                            }`}
+                    >
+                        <span className={`shrink-0 ${isActive('/panel/hunter') ? 'text-orange-500' : ''}`}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                            </svg>
+                        </span>
+                        Lead Hunter AI
+                    </Link>
+                )}
             </nav>
 
             {/* Bottom */}
