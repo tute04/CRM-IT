@@ -80,9 +80,9 @@ export async function POST(req: Request) {
       // MENSAJE DE RESPALDO (Por si la IA falla)
       let propuestaia = `Hola! Cómo estás? 👋 Vi tu negocio *${place.title}* en Google Maps y me pareció excelente. 
 
-Te escribo porque creamos **ITrium**, un CRM diseñado acá en Argentina para ayudar a negocios como el tuyo a organizar sus ventas y clientes de forma fácil.
+Te escribo porque creamos **ITirium**, un CRM diseñado acá en Argentina para ayudar a negocios como el tuyo a organizar sus ventas y clientes de forma fácil.
 
-Te invito a que lo pruebes gratis por 14 días entrando acá: https://itrium.com.ar 🚀`;
+Te invito a que lo pruebes gratis por 14 días entrando acá: https://itirium-crm.vercel.app 🚀`;
 
       let score = 5;
       let scoreMotivo = "Lead de búsqueda manual.";
