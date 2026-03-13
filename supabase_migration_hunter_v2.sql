@@ -12,3 +12,16 @@ ADD COLUMN IF NOT EXISTS convertido_cliente_id UUID REFERENCES public.clientes(i
 -- Comentario para documentar las columnas
 COMMENT ON COLUMN public.leads_hunter.scoring IS 'Puntaje de 1 a 10 de qué tan buen prospecto es';
 COMMENT ON COLUMN public.leads_hunter.contenido_web IS 'Texto extraído del sitio web para personalización';
+
+-- ============================================================
+-- Políticas de Administrador (Mate)
+-- ============================================================
+CREATE POLICY "Admin ve todos los negocios" 
+ON public.negocios 
+FOR SELECT 
+USING (auth.jwt() ->> 'email' = 'matebonavia@gmail.com');
+
+CREATE POLICY "Admin ve todos los leads hunter" 
+ON public.leads_hunter 
+FOR SELECT 
+USING (auth.jwt() ->> 'email' = 'matebonavia@gmail.com');

@@ -249,7 +249,11 @@ export default function LeadHunterPage() {
                       {lead.estado}
                     </span>
                     <button 
-                      onClick={() => setSelectedLead(lead)}
+                      onClick={() => {
+                        setSelectedLead(lead);
+                        // Log para debugear el teléfono si falla
+                        console.log('Lead seleccionado:', lead);
+                      }}
                       className="p-2 text-zinc-400 hover:text-white transition-colors"
                     >
                       <Eye size={18} />
@@ -333,7 +337,17 @@ export default function LeadHunterPage() {
               <div className="flex gap-3">
                 <button 
                   onClick={() => {
-                    window.open(`https://wa.me/${selectedLead.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(selectedLead.propuesta_ia)}`, '_blank');
+                    let phone = selectedLead.telefono.replace(/\D/g, '');
+                    if (phone.startsWith('0')) phone = phone.substring(1);
+                    if (!phone.startsWith('54')) phone = '54' + phone;
+                    // Para Argentina, si el número tiene 10 dígitos (ej 351xxxxxxx), 
+                    // a veces necesita el '9' después del 54 -> 549351xxxxxxx
+                    if (phone.length === 12 && phone.startsWith('54')) {
+                       phone = '549' + phone.substring(2);
+                    }
+                    
+                    const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(selectedLead.propuesta_ia)}`;
+                    window.open(url, '_blank');
                   }}
                   className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-green-500/20"
                 >

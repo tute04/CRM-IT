@@ -115,10 +115,14 @@ export async function POST(req: Request) {
             })
           });
           const aiData = await aiResp.json();
-          const parsed = JSON.parse(aiData.choices[0].message.content);
-          propuestaia = parsed.propuesta;
-          score = parsed.score;
-          scoreMotivo = parsed.motivo;
+          if (aiData.choices && aiData.choices[0]) {
+            const parsed = JSON.parse(aiData.choices[0].message.content);
+            propuestaia = parsed.propuesta;
+            score = parsed.score;
+            scoreMotivo = parsed.motivo;
+          } else {
+            console.error("Respuesta inesperada de OpenAI:", aiData);
+          }
         } catch (e) {
           console.error("Error en el cerebro de IA:", e);
         }
