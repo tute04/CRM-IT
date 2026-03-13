@@ -100,10 +100,10 @@ Te invito a que lo pruebes gratis por 14 días entrando acá: https://itrium.com
               response_format: { type: "json_object" },
               messages: [{
                 role: "system",
-                content: `Eres un experto vendedor argentino de ITrium CRM (itrium.com.ar). 
+                content: `Eres un experto vendedor argentino de ITirium CRM (itirium-crm.vercel.app). 
                 Escribe un mensaje de WhatsApp para el dueño de un negocio. 
                 USA TONO ARGENTINO (Che, vi tu negocio, probalo, voseo).
-                INCLUYE SIEMPRE el link itrium.com.ar y menciona los 14 DÍAS GRATIS.
+                INCLUYE SIEMPRE el link itirium-crm.vercel.app y menciona los 14 DÍAS GRATIS.
                 Devuelve JSON: {"propuesta": "...", "score": 1-10, "motivo": "..."}`
               }, {
                 role: "user",

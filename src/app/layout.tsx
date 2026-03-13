@@ -11,12 +11,12 @@ export const metadata: Metadata = {
   authors: [{ name: 'ITrium Team' }],
   openGraph: {
     title: 'ITrium | El CRM que lee tus facturas con IA',
-    description: 'Dejá de cargar datos manualmente. Organizá tu negocio con ITrium.',
-    url: 'https://itrium.com.ar', 
-    siteName: 'ITrium',
+    description: 'Dejá de cargar datos manualmente. Organizá tu negocio con ITirium.',
+    url: 'https://itirium-crm.vercel.app', 
+    siteName: 'ITirium',
     images: [
       {
-        url: 'https://itrium.com.ar/og-image.png',
+        url: 'https://itirium-crm.vercel.app/og-image.png',
         width: 1200,
         height: 630,
         alt: 'ITrium CRM Dashboard',
