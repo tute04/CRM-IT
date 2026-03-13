@@ -104,7 +104,7 @@ export async function POST(req: Request) {
                    - "Vi tu perfil en Google Maps": Menciona algo específico (sus estrellas, sus reseñas o que NO tienen web).
                    - El Problema: "Sé que gestionar [Nicho] toma mucho tiempo con papeles o mensaje de WhatsApp sueltos".
                    - La Solución: ITrium ayuda a automatizar ventas, stock y clientes.
-                   - CTA Claro: "Te dejo para que te crees una cuenta y lo pruebes gratis por 7 días: itrium.com.ar"
+                   - CTA Claro: "Te dejo para que te crees una cuenta y lo pruebes gratis por 14 días: itrium.com.ar"
                 3. FORMATO: Usa emojis y negritas de WhatsApp (asteriscos). Sé breve (máximo 3 párrafos cortos).
                 
                 Devuelve un JSON con:
