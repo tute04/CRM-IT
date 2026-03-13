@@ -24,6 +24,8 @@ export default function LeadHunterPage() {
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<any>(null);
+  const [targetNicho, setTargetNicho] = useState('Ferreterías');
+  const [targetCiudad, setTargetCiudad] = useState('Córdoba');
   const [stats, setStats] = useState({
     encontrados: 0,
     enviados: 0,
@@ -74,7 +76,7 @@ export default function LeadHunterPage() {
       const resp = await fetch('/api/hunter/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nicho: 'Ferreterías', ciudad: 'Córdoba' })
+        body: JSON.stringify({ nicho: targetNicho, ciudad: targetCiudad })
       });
       
       const result = await resp.json();
@@ -176,7 +178,7 @@ export default function LeadHunterPage() {
               </h2>
               <p className="text-zinc-400 max-w-md">
                 {isActive 
-                  ? 'Buscando negocios en Buenos Aires, Córdoba y Rosario que coincidan con el perfil de ITrium.' 
+                  ? `Buscando ${targetNicho} en ${targetCiudad} que coincidan con el perfil de ITrium.` 
                   : 'Pulsa el botón superior para iniciar la búsqueda automática de clientes.'}
               </p>
               
@@ -326,13 +328,18 @@ export default function LeadHunterPage() {
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2 block">Nichos de Mercado</label>
                 <div className="flex flex-wrap gap-2">
                   {['Ferreterías', 'Talleres', 'Peluquerías', 'Pinturerías'].map(tag => (
-                    <span key={tag} className="px-3 py-1 bg-orange-500/10 text-orange-500 border border-orange-500/20 rounded-lg text-sm font-medium cursor-pointer hover:bg-orange-500/20">
+                    <span 
+                      key={tag} 
+                      onClick={() => setTargetNicho(tag)}
+                      className={`px-3 py-1 border rounded-lg text-sm font-medium cursor-pointer transition-all ${
+                        targetNicho === tag 
+                        ? 'bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-500/20' 
+                        : 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/20'
+                      }`}
+                    >
                       {tag}
                     </span>
                   ))}
-                  <button className="px-3 py-1 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5">
-                    + Agregar
-                  </button>
                 </div>
               </div>
 
@@ -340,9 +347,10 @@ export default function LeadHunterPage() {
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2 block">Ciudades Objetivo</label>
                 <input 
                   type="text" 
-                  placeholder="Ej: Buenos Aires, Rosario..." 
-                  className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
-                  defaultValue="Buenos Aires, Córdoba, Rosario"
+                  placeholder="Ej: Córdoba, Rosario..." 
+                  className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none dark:text-white"
+                  value={targetCiudad}
+                  onChange={(e) => setTargetCiudad(e.target.value)}
                 />
               </div>
 
