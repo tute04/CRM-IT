@@ -229,7 +229,18 @@ export default function LeadHunterPage() {
                       <p className="text-xs text-zinc-500">{lead.ciudad} · {new Date(lead.created_at).toLocaleDateString()}</p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right flex items-center gap-4">
+                    {lead.scoring > 0 && (
+                      <div className="flex flex-col items-end mr-2">
+                        <div className="text-[10px] font-bold text-zinc-500 uppercase">Score</div>
+                        <div className={`text-sm font-black ${
+                          lead.scoring >= 8 ? 'text-green-500' : 
+                          lead.scoring >= 5 ? 'text-orange-500' : 'text-zinc-500'
+                        }`}>
+                          {lead.scoring}/10
+                        </div>
+                      </div>
+                    )}
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                       lead.estado === 'contactado' ? 'bg-blue-500/10 text-blue-500' :
                       lead.estado === 'interesado' ? 'bg-green-500/10 text-green-500' :
@@ -239,7 +250,7 @@ export default function LeadHunterPage() {
                     </span>
                     <button 
                       onClick={() => setSelectedLead(lead)}
-                      className="ml-4 p-2 text-zinc-400 hover:text-white transition-colors"
+                      className="p-2 text-zinc-400 hover:text-white transition-colors"
                     >
                       <Eye size={18} />
                     </button>
@@ -297,22 +308,57 @@ export default function LeadHunterPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl">
                   <span className="text-xs font-bold text-zinc-500 uppercase block mb-1">Puntaje Lead</span>
-                  <div className="text-lg font-bold text-green-500">8.5 / 10</div>
+                  <div className={`text-lg font-bold ${
+                    selectedLead.scoring >= 8 ? 'text-green-500' : 
+                    selectedLead.scoring >= 5 ? 'text-orange-500' : 'text-zinc-500'
+                  }`}>
+                    {selectedLead.scoring || 'N/A'} / 10
+                  </div>
                 </div>
                 <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl">
-                  <span className="text-xs font-bold text-zinc-500 uppercase block mb-1">Riesgo Bloqueo</span>
-                  <div className="text-lg font-bold text-orange-500">Bajo</div>
+                  <span className="text-xs font-bold text-zinc-500 uppercase block mb-1">Motivo IA</span>
+                  <div className="text-xs font-medium dark:text-zinc-400 line-clamp-2">
+                    {selectedLead.scoring_motivo || 'Buscando nicho rentable...'}
+                  </div>
                 </div>
               </div>
 
-              <button 
-                onClick={() => {
-                  window.open(`https://wa.me/${selectedLead.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(selectedLead.propuesta_ia)}`, '_blank');
-                }}
-                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-green-500/20"
-              >
-                <Phone size={20} /> Enviar Mensaje por WhatsApp
-              </button>
+              {selectedLead.contenido_web && (
+                <div className="p-4 bg-zinc-100 dark:bg-zinc-800/30 rounded-xl text-[10px] text-zinc-500 font-mono line-clamp-3">
+                  <span className="font-bold uppercase block mb-1">Data Extraída Ojo Mágico:</span>
+                  {selectedLead.contenido_web}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => {
+                    window.open(`https://wa.me/${selectedLead.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(selectedLead.propuesta_ia)}`, '_blank');
+                  }}
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-green-500/20"
+                >
+                  <Phone size={20} /> WhatsApp
+                </button>
+                
+                {!selectedLead.convertido_cliente_id && (
+                  <button 
+                    onClick={async () => {
+                      const resp = await fetch('/api/hunter/convert', {
+                        method: 'POST',
+                        body: JSON.stringify({ leadId: selectedLead.id })
+                      });
+                      if (resp.ok) {
+                        toast('Convertido a cliente con éxito!', 'success');
+                        setSelectedLead(null);
+                        fetchLeads();
+                      }
+                    }}
+                    className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-4 rounded-xl border border-white/10 transition-all flex items-center justify-center gap-3"
+                  >
+                    <Users size={20} /> Al CRM
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </Modal>

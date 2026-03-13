@@ -50,36 +50,63 @@ export async function POST(req: Request) {
     const serperData = await serperResp.json();
     const places = serperData.places || serperData.maps || [];
 
-    // 2. PROCESAR LOS PRIMEROS 5 RESULTADOS (Para no quemar créditos rápido)
+    // 2. PROCESAR RESULTADOS CON IA AVANZADA
     const leadsToInsert = [];
     
-    for (const place of places.slice(0, 5)) {
-      // Generar propuesta con IA para cada uno
-      let propuesta = `Hola! Vi tu negocio ${place.title} en Google Maps y me pareció excelente. Quería comentarte que estamos ayudando a negocios de ${ciudad} a automatizar su gestión con ITrium...`;
+    for (const place of places.slice(0, 4)) { // 4 por vez para balancear velocidad
+      let contenidoWeb = "";
+      
+      // Módulo "Ojo Mágico": Scraping básico si tiene web
+      if (place.website) {
+        try {
+          const webResp = await fetch(place.website, { signal: AbortSignal.timeout(3000) });
+          const html = await webResp.text();
+          // Extraemos solo texto plano básico (primeros 2000 caracteres)
+          contenidoWeb = html.replace(/<[^>]*>?/gm, ' ').substring(0, 2000).trim();
+        } catch (e) {
+          console.warn(`No se pudo scrapear ${place.website}`);
+        }
+      }
+
+      let propuestaia = `Hola! Vi tu negocio ${place.title}. Soy de ITrium y quería ayudarte...`;
+      let score = 5;
+      let scoreMotivo = "Lead estándar de búsqueda.";
 
       if (openaiKey && openaiKey !== 'tu_key_de_openai_aqui') {
         try {
           const aiResp = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+              'Authorization': `Bearer ${openaiKey}`,
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              model: "gpt-3.5-turbo",
+              model: "gpt-3.5-turbo-0125",
+              response_format: { type: "json_object" },
               messages: [{
                 role: "system",
-                content: "Eres un experto en ventas de ITrium, un CRM para negocios argentinos. Tu tarea es escribir un mensaje de WhatsApp corto, amigable y muy convincente para un dueño de negocio. No uses un lenguaje muy formal."
+                content: `Eres un consultor de ventas experto para ITrium CRM. 
+                Debes analizar los datos de un negocio y devolver un JSON con:
+                {
+                  "propuesta": "mensaje de whatsapp hiper-personalizado",
+                  "score": número del 1 al 10,
+                  "motivo": "breve explicación del score"
+                }
+                Si el negocio NO tiene web, el score sube (+2). Si tiene mala puntuación, el score sube (+1) porque necesitan gestión.`
               }, {
                 role: "user",
-                content: `Escribe un pitch de venta para: ${place.title}. Es una ${nicho} en ${ciudad}. Tiene ${place.rating} estrellas en Google. ${place.website ? 'Tienen web' : 'NO tienen web'}. Enfócate en cómo ITrium les ahorra tiempo.`
+                content: `Negocio: ${place.title}. Nicho: ${nicho}. Rating: ${place.rating}. Web: ${place.website || 'No tiene'}. 
+                Contenido extraído web (si hay): ${contenidoWeb.substring(0, 500)}`
               }]
             })
           });
           const aiData = await aiResp.json();
-          propuesta = aiData.choices[0].message.content;
+          const parsed = JSON.parse(aiData.choices[0].message.content);
+          propuestaia = parsed.propuesta;
+          score = parsed.score;
+          scoreMotivo = parsed.motivo;
         } catch (e) {
-          console.error("Error generando propuesta con OpenAI", e);
+          console.error("Error en el cerebro de IA:", e);
         }
       }
 
@@ -90,9 +117,16 @@ export async function POST(req: Request) {
         nicho: nicho,
         sitio_web: place.website || '',
         telefono: place.phoneNumber || '',
-        metadata: { rating: place.rating, reviews: place.ratingCount },
+        metadata: { 
+          rating: place.rating, 
+          reviews: place.ratingCount,
+          vicinity: place.address 
+        },
         estado: 'nuevo',
-        propuesta_ia: propuesta
+        propuesta_ia: propuestaia,
+        scoring: score,
+        scoring_motivo: scoreMotivo,
+        contenido_web: contenidoWeb.substring(0, 1000)
       });
     }
 
