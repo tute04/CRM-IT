@@ -77,9 +77,15 @@ export async function POST(req: Request) {
         }
       }
 
-      let propuestaia = `Hola! Vi tu negocio ${place.title}. Soy de ITrium y quería ayudarte...`;
+      // MENSAJE DE RESPALDO (Por si la IA falla)
+      let propuestaia = `Hola! Cómo estás? 👋 Vi tu negocio *${place.title}* en Google Maps y me pareció excelente. 
+
+Te escribo porque creamos **ITrium**, un CRM diseñado acá en Argentina para ayudar a negocios como el tuyo a organizar sus ventas y clientes de forma fácil.
+
+Te invito a que lo pruebes gratis por 14 días entrando acá: https://itrium.com.ar 🚀`;
+
       let score = 5;
-      let scoreMotivo = "Lead estándar de búsqueda.";
+      let scoreMotivo = "Lead de búsqueda manual.";
 
       if (openaiKey && openaiKey !== 'tu_key_de_openai_aqui') {
         try {
@@ -90,57 +96,34 @@ export async function POST(req: Request) {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              model: "gpt-3.5-turbo-0125",
+              model: "gpt-4o-mini-2024-07-18", // Modelo más nuevo y potente
               response_format: { type: "json_object" },
               messages: [{
                 role: "system",
-                content: `Eres un experto vendedor de ITrium (itrium.com.ar), un CRM diseñado para simplificar la vida de negocios en Argentina. 
-                Tu objetivo es escribir un mensaje de WhatsApp para el dueño de un negocio que acabo de encontrar en Google Maps.
-                
-                REGLAS DE ORO DEL MENSAJE:
-                1. TONO: Argentino nativo (tuteo: "Hola! Cómo estás?", "Che, vi tu negocio..."), cálido, profesional pero no acartonado.
-                2. ESTRUCTURA: 
-                   - Saludo personalizado con el nombre del negocio.
-                   - "Vi tu perfil en Google Maps": Menciona algo específico (sus estrellas, sus reseñas o que NO tienen web).
-                   - El Problema: "Sé que gestionar [Nicho] toma mucho tiempo con papeles o mensaje de WhatsApp sueltos".
-                   - La Solución: ITrium ayuda a automatizar ventas, stock y clientes.
-                   - CTA Claro: "Te dejo para que te crees una cuenta y lo pruebes gratis por 14 días: itrium.com.ar"
-                3. FORMATO: Usa emojis y negritas de WhatsApp (asteriscos). Sé breve (máximo 3 párrafos cortos).
-                
-                Devuelve un JSON con:
-                {
-                  "propuesta": "el mensaje de whatsapp completo",
-                  "score": número del 1 al 10 (basado en qué tanto necesitan el CRM),
-                  "motivo": "breve explicación de por qué ese score"
-                }
-                
-                CALIBRACIÓN DE SCORE:
-                - Sin web: +2 puntos.
-                - Buen rating (poca gestión de clientes): +1 punto.
-                - Rubro complejo (Talleres, Distribuidoras): +2 puntos.`
+                content: `Eres un experto vendedor argentino de ITrium CRM (itrium.com.ar). 
+                Escribe un mensaje de WhatsApp para el dueño de un negocio. 
+                USA TONO ARGENTINO (Che, vi tu negocio, probalo, voseo).
+                INCLUYE SIEMPRE el link itrium.com.ar y menciona los 14 DÍAS GRATIS.
+                Devuelve JSON: {"propuesta": "...", "score": 1-10, "motivo": "..."}`
               }, {
                 role: "user",
-                content: `DATOS DEL PROSPECTO:
-                Nombre: ${place.title}. 
-                Rubro: ${nicho}. 
-                Ciudad: ${ciudad}.
-                Google Rating: ${place.rating} estrellas (${place.ratingCount} reseñas). 
-                Web: ${place.website || 'NO TIENE (Oportunidad de Oro)'}. 
-                Contenido detectado en su web (si hay): ${contenidoWeb.substring(0, 400)}`
+                content: `Negocio: ${place.title}. Nicho: ${nicho}. Rating: ${place.rating}. Web: ${place.website || 'No tiene'}.`
               }]
             })
           });
+          
           const aiData = await aiResp.json();
+          
           if (aiData.choices && aiData.choices[0]) {
             const parsed = JSON.parse(aiData.choices[0].message.content);
             propuestaia = parsed.propuesta;
             score = parsed.score;
             scoreMotivo = parsed.motivo;
           } else {
-            console.error("Respuesta inesperada de OpenAI:", aiData);
+            console.error("OpenAI Error Detail:", aiData.error || aiData);
           }
         } catch (e) {
-          console.error("Error en el cerebro de IA:", e);
+          console.error("Error crítico en OpenAI:", e);
         }
       }
 
