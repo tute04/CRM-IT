@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const { nicho, ciudad } = await req.json();
+    const { nicho, ciudad, tono = "Profesional y Amigable", limit = 4 } = await req.json();
 
     const serperKey = process.env.SERPER_API_KEY;
     const openaiKey = process.env.OPENAI_API_KEY;
@@ -53,7 +53,8 @@ export async function POST(req: Request) {
     // 2. PROCESAR RESULTADOS CON IA AVANZADA
     const leadsToInsert = [];
     
-    for (const place of places.slice(0, 4)) { // 4 por vez para balancear velocidad
+    const searchLimit = Math.min(limit, 10); // Límite máximo 10 para Vercel Serverless
+    for (const place of places.slice(0, searchLimit)) { 
       let contenidoWeb = "";
       let emailEncontrado = "";
       
@@ -86,6 +87,7 @@ Te invito a que lo pruebes gratis por 14 días entrando acá: https://itirium-cr
 
       let score = 5;
       let scoreMotivo = "Lead de búsqueda manual.";
+      let esCelular = true;
 
       if (openaiKey && openaiKey !== 'tu_key_de_openai_aqui') {
         try {
@@ -96,18 +98,22 @@ Te invito a que lo pruebes gratis por 14 días entrando acá: https://itirium-cr
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              model: "gpt-4o-mini-2024-07-18", // Modelo más nuevo y potente
+              model: "gpt-4o-mini", // Modelo rápido
               response_format: { type: "json_object" },
               messages: [{
                 role: "system",
                 content: `Eres un experto vendedor argentino de ITirium CRM (itirium-crm.vercel.app). 
-                Escribe un mensaje de WhatsApp para el dueño de un negocio. 
-                USA TONO ARGENTINO (Che, vi tu negocio, probalo, voseo).
+                Escribe un mensaje corto de WhatsApp para el dueño de un negocio. 
+                Adaptá el mensaje a este tono pedido por el usuario: "${tono}".
+                USA TONO ARGENTINO (Che, vi tu negocio, probalo, voseo), pero manteniendo la formalidad si se requiere.
+                Regla de Reseñas: Si el rating es menor a 4.0, mencioná sutilmente que el CRM los ayuda a dar mejor atención y mejorar la reputación. Si es 4.5 o más, felicitalos por la excelente puntuación.
+                Regla de Web: Si no tienen web, mencioná que el CRM les permite tener una presencia digital.
                 INCLUYE SIEMPRE el link itirium-crm.vercel.app y menciona los 14 DÍAS GRATIS.
-                Devuelve JSON: {"propuesta": "...", "score": 1-10, "motivo": "..."}`
+                Analiza el teléfono provisto: en Argentina, si empieza con cód. de área + 15 o si la longitud total con código de área es de 10 dígitos (ej 351xxxxxxx), es celular. Si tiene guiones medios (422-3312) o menos dígitos, suele ser fijo. Devuelve boolean en 'es_celular'.
+                Devuelve JSON: {"propuesta": "...", "score": 1-10, "motivo": "...", "es_celular": true|false}`
               }, {
                 role: "user",
-                content: `Negocio: ${place.title}. Nicho: ${nicho}. Rating: ${place.rating}. Web: ${place.website || 'No tiene'}.`
+                content: `Negocio: ${place.title}. Nicho: ${nicho}. Rating: ${place.rating || 'N/A'}. Web: ${place.website || 'No tiene'}. Teléfono: ${place.phoneNumber || 'N/A'}.`
               }]
             })
           });
@@ -119,6 +125,7 @@ Te invito a que lo pruebes gratis por 14 días entrando acá: https://itirium-cr
             propuestaia = parsed.propuesta;
             score = parsed.score;
             scoreMotivo = parsed.motivo;
+            if (parsed.es_celular !== undefined) esCelular = parsed.es_celular;
           } else {
             console.error("OpenAI Error Detail:", aiData.error || aiData);
           }
@@ -138,7 +145,8 @@ Te invito a que lo pruebes gratis por 14 días entrando acá: https://itirium-cr
         metadata: { 
           rating: place.rating, 
           reviews: place.ratingCount,
-          vicinity: place.address 
+          vicinity: place.address,
+          es_celular: esCelular
         },
         estado: 'nuevo',
         propuesta_ia: propuestaia,

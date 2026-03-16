@@ -26,6 +26,8 @@ export default function LeadHunterPage() {
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [targetNicho, setTargetNicho] = useState('Ferreterías');
   const [targetCiudad, setTargetCiudad] = useState('Córdoba');
+  const [targetTono, setTargetTono] = useState('Profesional y Amigable');
+  const [targetLimit, setTargetLimit] = useState(4);
   const [stats, setStats] = useState({
     encontrados: 0,
     enviados: 0,
@@ -76,7 +78,7 @@ export default function LeadHunterPage() {
       const resp = await fetch('/api/hunter/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nicho: targetNicho, ciudad: targetCiudad })
+        body: JSON.stringify({ nicho: targetNicho, ciudad: targetCiudad, tono: targetTono, limit: targetLimit })
       });
       
       const result = await resp.json();
@@ -290,13 +292,24 @@ export default function LeadHunterPage() {
                       <ExternalLink size={18} />
                     </a>
                   )}
-                  <a 
-                    href={`https://wa.me/${selectedLead.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(selectedLead.propuesta_ia)}`}
-                    target="_blank"
-                    className="p-2 bg-green-500/20 text-green-500 rounded-lg hover:bg-green-500 hover:text-white transition-all"
-                  >
-                    <Phone size={18} />
-                  </a>
+                  {selectedLead.metadata?.es_celular === false ? (
+                    <a 
+                      href={`tel:${selectedLead.telefono.replace(/\D/g, '')}`}
+                      className="p-2 bg-blue-500/20 text-blue-500 rounded-lg hover:bg-blue-500 hover:text-white transition-all"
+                      title="Llamada (Teléfono Fijo)"
+                    >
+                      <Phone size={18} />
+                    </a>
+                  ) : (
+                    <a 
+                      href={`https://wa.me/${selectedLead.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(selectedLead.propuesta_ia)}`}
+                      target="_blank"
+                      className="p-2 bg-green-500/20 text-green-500 rounded-lg hover:bg-green-500 hover:text-white transition-all"
+                      title="Enviar WhatsApp"
+                    >
+                      <MessageSquare size={18} />
+                    </a>
+                  )}
                 </div>
               </div>
 
@@ -335,24 +348,35 @@ export default function LeadHunterPage() {
               )}
 
               <div className="flex gap-3">
-                <button 
-                  onClick={() => {
-                    let phone = selectedLead.telefono.replace(/\D/g, '');
-                    if (phone.startsWith('0')) phone = phone.substring(1);
-                    if (!phone.startsWith('54')) phone = '54' + phone;
-                    // Para Argentina, si el número tiene 10 dígitos (ej 351xxxxxxx), 
-                    // a veces necesita el '9' después del 54 -> 549351xxxxxxx
-                    if (phone.length === 12 && phone.startsWith('54')) {
-                       phone = '549' + phone.substring(2);
-                    }
-                    
-                    const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(selectedLead.propuesta_ia)}`;
-                    window.open(url, '_blank');
-                  }}
-                  className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-green-500/20"
-                >
-                  <Phone size={20} /> WhatsApp
-                </button>
+                {selectedLead.metadata?.es_celular === false ? (
+                  <button 
+                    onClick={() => {
+                      window.open(`tel:${selectedLead.telefono.replace(/\D/g, '')}`, '_self');
+                    }}
+                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-500/20"
+                  >
+                    <Phone size={20} /> Llamar
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => {
+                      let phone = selectedLead.telefono.replace(/\D/g, '');
+                      if (phone.startsWith('0')) phone = phone.substring(1);
+                      if (!phone.startsWith('54')) phone = '54' + phone;
+                      // Para Argentina, si el número tiene 10 dígitos (ej 351xxxxxxx), 
+                      // a veces necesita el '9' después del 54 -> 549351xxxxxxx
+                      if (phone.length === 12 && phone.startsWith('54')) {
+                         phone = '549' + phone.substring(2);
+                      }
+                      
+                      const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(selectedLead.propuesta_ia)}`;
+                      window.open(url, '_blank');
+                    }}
+                    className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-green-500/20"
+                  >
+                    <MessageSquare size={20} /> WhatsApp
+                  </button>
+                )}
                 
                 {!selectedLead.convertido_cliente_id && (
                   <button 
@@ -428,19 +452,30 @@ export default function LeadHunterPage() {
 
               <div>
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2 block">Tono del Bot</label>
-                <select className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none">
-                  <option>Profesional y Amigable</option>
-                  <option>Agresivo de Ventas</option>
-                  <option>Informativo / Educativo</option>
+                <select 
+                  className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                  value={targetTono}
+                  onChange={(e) => setTargetTono(e.target.value)}
+                >
+                  <option value="Profesional y Amigable">Profesional y Amigable</option>
+                  <option value="Agresivo de Ventas">Agresivo de Ventas</option>
+                  <option value="Informativo / Educativo">Informativo / Educativo</option>
                 </select>
               </div>
 
               <div className="pt-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium dark:text-white">Límite Diario</span>
-                  <span className="text-sm font-bold text-orange-500">50 mails/día</span>
+                  <span className="text-sm font-medium dark:text-white">Límite de Búsqueda</span>
+                  <span className="text-sm font-bold text-orange-500">{targetLimit} leads/vez</span>
                 </div>
-                <input type="range" className="w-full accent-orange-500" defaultValue="50" min="10" max="200" />
+                <input 
+                  type="range" 
+                  className="w-full accent-orange-500" 
+                  value={targetLimit} 
+                  min="1" 
+                  max="10" 
+                  onChange={(e) => setTargetLimit(parseInt(e.target.value))}
+                />
               </div>
             </div>
           </div>

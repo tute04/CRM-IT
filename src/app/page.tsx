@@ -124,34 +124,93 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* 4. FEATURES CON SCREENSHOTS */}
-        <section id="caracteristicas" className="py-24 sm:py-32 overflow-hidden scroll-mt-16">
+        {/* 4. LEAD HUNTER HIGHLIGHT (NUEVA SECCIÓN CRÍTICA) */}
+        <section id="hunter" className="py-24 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+              <div className="relative order-2 lg:order-1">
+                <div className="absolute -top-10 -left-10 w-40 h-40 bg-orange-500/20 blur-[80px] rounded-full" />
+                <BrowserFrame url="app.itrium.com/panel/hunter" className="h-[450px] shadow-2xl shadow-orange-500/10 border border-orange-500/20">
+                  <Image 
+                    src="/screenshots/lead_hunter.png" 
+                    alt="Lead Hunter AI Radar" 
+                    fill 
+                    className="object-cover" 
+                    unoptimized 
+                  />
+                </BrowserFrame>
+              </div>
+              <div className="order-1 lg:order-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 text-orange-500 text-sm font-bold mb-6">
+                  ✨ La Joya de la Corona
+                </div>
+                <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">
+                  Tu CRM no solo guarda clientes, <span className="text-orange-500">los busca por vos.</span>
+                </h2>
+                <p className="text-xl text-zinc-400 mb-8 leading-relaxed">
+                  Activá el <strong>Lead Hunter AI</strong> y dejá que nuestro radar escanee tu zona para encontrar nuevos prospectos. Genera propuestas personalizadas automáticamente.
+                </p>
+                <div className="space-y-4">
+                  {[
+                    "Escaneo inteligente por ciudades y rubros.",
+                    "Generación de pitches de venta personalizados con IA.",
+                    "Envío directo a WhatsApp con un solo click.",
+                    "Scoring automático de prospectos rentables."
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-3 text-zinc-300">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
+                      </div>
+                      <span className="font-medium">{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-10">
+                  <Link href="/registro" className="inline-flex items-center gap-2 group text-orange-500 font-bold text-lg">
+                    Ver el Lead Hunter en acción
+                    <svg className="group-hover:translate-x-1 transition-transform" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 5. FEATURES CON SCREENSHOTS */}
+        <section id="caracteristicas" className="py-24 sm:py-32 overflow-hidden bg-[#0c0c0c] scroll-mt-16">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center max-w-3xl mx-auto mb-20">
-              <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-6">Todo lo que necesitás</h2>
-              <p className="text-lg text-zinc-400">Sin curva de aprendizaje. Si sabés usar WhatsApp, sabés usar ITrium.</p>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center mb-32">
-               <BrowserFrame url="app.itrium.com/panel" className="h-[350px]"><Image src="/screenshots/dashboard.png" alt="Dashboard" fill unoptimized className="object-cover" /></BrowserFrame>
-               <div>
-                 <h3 className="text-3xl font-bold text-white mb-4">Tu negocio de un vistazo</h3>
-                 <p className="text-lg text-zinc-400 mb-6">Métricas en tiempo real para tomar decisiones sin perder tiempo.</p>
-                 <ul className="space-y-4 text-zinc-300">
-                   <li>✓ Facturación por semana, mes y año</li>
-                   <li>✓ Top 5 clientes por volumen</li>
-                 </ul>
-               </div>
+              <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-6">Todo bajo control</h2>
+              <p className="text-lg text-zinc-400">Diseñado para ser usado desde el celular o la compu. Sin curvas de aprendizaje.</p>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center mb-32">
                <div className="order-2 lg:order-1">
-                 <h3 className="text-3xl font-bold text-white mb-4">Conocé a cada cliente</h3>
-                 <p className="text-lg text-zinc-400 mb-6">Ficha completa con historial y contacto directo por WhatsApp.</p>
+                 <h3 className="text-3xl font-bold text-white mb-4">Métricas que importan</h3>
+                 <p className="text-lg text-zinc-400 mb-6">Olvidate de las planillas complejas. Visualizá tu rentabilidad en tiempo real.</p>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+                      <div className="text-orange-500 font-bold text-2xl mb-1">+24%</div>
+                      <div className="text-xs text-zinc-500 uppercase font-bold">Crecimiento Promedio</div>
+                    </div>
+                    <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+                      <div className="text-white font-bold text-2xl mb-1">10h</div>
+                      <div className="text-xs text-zinc-500 uppercase font-bold">Ahorro Semanal</div>
+                    </div>
+                 </div>
+               </div>
+               <BrowserFrame url="app.itrium.com/panel" className="h-[350px] order-1 lg:order-2"><Image src="/screenshots/dashboard.png" alt="Dashboard" fill unoptimized className="object-cover" /></BrowserFrame>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+               <BrowserFrame url="app.itrium.com/clientes" className="h-[350px]"><Image src="/screenshots/clientes.png" alt="Clientes" fill unoptimized className="object-cover" /></BrowserFrame>
+               <div>
+                 <h3 className="text-3xl font-bold text-white mb-4">Gestión Humana de Clientes</h3>
+                 <p className="text-lg text-zinc-400 mb-6">Accedé al historial de cada persona y escribiles por WhatsApp con un toque.</p>
                  <ul className="space-y-4 text-zinc-300">
-                   <li>✓ Historial completo de ventas</li>
-                   <li>✓ WhatsApp directo desde la ficha</li>
+                   <li className="flex items-center gap-3"><span className="text-orange-500">✔</span> Recordatorios automáticos</li>
+                   <li className="flex items-center gap-3"><span className="text-orange-500">✔</span> Historial unificado de ventas</li>
+                   <li className="flex items-center gap-3"><span className="text-orange-500">✔</span> Etiquetas personalizadas</li>
                  </ul>
                </div>
-               <BrowserFrame url="app.itrium.com/clientes" className="h-[350px] order-1 lg:order-2"><Image src="/screenshots/clientes.png" alt="Clientes" fill unoptimized className="object-cover" /></BrowserFrame>
             </div>
           </div>
         </section>
