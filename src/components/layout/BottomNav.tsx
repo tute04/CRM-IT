@@ -3,6 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { createClient } from '@/utils/supabase-client';
+
+const ADMIN_EMAIL = 'matebonavia@gmail.com';
 
 const items = [
     {
@@ -63,6 +66,18 @@ const items = [
 
 export default function BottomNav() {
     const pathname = usePathname();
+    const [userEmail, setUserEmail] = React.useState<string | null>(null);
+    const supabase = createClient();
+
+    React.useEffect(() => {
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUserEmail(user?.email || null);
+        };
+        getUser();
+    }, []);
+
+    const isHunterVisible = userEmail === ADMIN_EMAIL;
 
     const isActive = (href: string) => {
         if (href === '/panel') return pathname === '/panel';
@@ -85,6 +100,23 @@ export default function BottomNav() {
                         {item.label}
                     </Link>
                 ))}
+
+                {isHunterVisible && (
+                    <Link
+                        href="/panel/hunter"
+                        className={`flex flex-col items-center gap-0.5 py-2 px-3 text-[10px] font-semibold transition-colors ${isActive('/panel/hunter')
+                            ? 'text-orange-500'
+                            : 'text-zinc-400 dark:text-zinc-500'
+                            }`}
+                    >
+                        <span className={isActive('/panel/hunter') ? 'text-orange-500' : ''}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                            </svg>
+                        </span>
+                        Hunter
+                    </Link>
+                )}
             </div>
         </nav>
     );
