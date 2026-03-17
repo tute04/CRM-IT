@@ -132,8 +132,9 @@ export default function AutopilotPage() {
       setLimiteDiario(5);
       
       fetchCampanas();
-    } catch (err) {
-      toast('Error al crear campaña', 'error');
+    } catch (err: any) {
+      console.error(err);
+      toast(err.message || 'Error al crear campaña', 'error');
     }
   };
 
