@@ -96,7 +96,7 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
 
 
     const isActive = (href: string) => {
-        if (href === '/panel') return pathname === '/panel';
+        if (href === '/panel' || href === '/panel/hunter') return pathname === href;
         return pathname.startsWith(href);
     };
 
@@ -156,7 +156,21 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
                                     <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                                 </svg>
                             </span>
-                            Lead Hunter AI
+                            Lead Hunter Manual
+                        </Link>
+                        <Link
+                            href="/panel/hunter/autopilot"
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${isActive('/panel/hunter/autopilot')
+                                ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-500 border-l-[3px] border-orange-500 pl-[9px]'
+                                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+                                }`}
+                        >
+                            <span className={`shrink-0 ${isActive('/panel/hunter/autopilot') ? 'text-orange-500' : ''}`}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" />
+                                </svg>
+                            </span>
+                            Piloto Automático
                         </Link>
                     </>
                 )}
