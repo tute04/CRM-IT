@@ -135,12 +135,26 @@ export async function GET(req: Request) {
 
         // 2d. Enviar Email vía Resend
         try {
-          await resend.emails.send({
-            from: 'ITirium CRM <onboarding@resend.dev>', // Por ahora usas resend.dev para pruebas (solo llega a tu correo registrado), cambiar a tu dominio verificado después
-            to: emailEncontrado, // NOTA: Hasta que verifiques tu dominio en Resend, esto fallará si envías a correos que no sean el tuyo.
+          // NOTA: Hasta que añadas tu dominio a Resend, solo envía a correos verificados.
+          // Para que puedas testearlo y verlo ahora mismo, forzamos a que te llegue una COPIA a tu mail.
+          const { data, error } = await resend.emails.send({
+            from: 'Piloto Automatico <onboarding@resend.dev>', // No cambiar hasta verificar dominio
+            to: ['matebonavia@gmail.com'], // Forzado a tu mail para poder testear la IA. Luego cambiar a: emailEncontrado
             subject: subjectIA,
-            html: bodyIA,
+            html: `
+              <div style="background:#fff3ed; padding:15px; border-radius:10px; margin-bottom:20px; border:1px solid #f97316;">
+                <p style="color:#f97316; font-weight:bold; margin:0;">🤖 Prueba de ITirium Autopilot</p>
+                <p style="margin:5px 0 0 0; font-size:12px; color:#555;">Este mail estaba destinado originalmente a: <strong>${emailEncontrado}</strong> (de ${place.title})</p>
+              </div>
+              <br/>
+              ${bodyIA}
+            `,
           });
+
+          if (error) {
+             console.error("Resend Error al enviar a", emailEncontrado, error);
+             continue; // Evita contarlo si rebotó
+          }
 
           emailsEnviados++;
           leadsProcesadosParaCampana++;
@@ -156,13 +170,13 @@ export async function GET(req: Request) {
             sitio_web: place.website || '',
             telefono: place.phoneNumber || '',
             estado: 'contactado', // Ya le enviamos email!
-            propuesta_ia: bodyIA.substring(0, 100), // Version resumida o "Enviado por email"
+            propuesta_ia: bodyIA.substring(0, 500), 
             email_enviado: true,
             fecha_envio_email: new Date().toISOString()
           }]);
 
         } catch (resendError) {
-          console.error("Resend Error al enviar a", emailEncontrado, resendError);
+          console.error("Resend Error Crítico:", resendError);
         }
       } 
     }
