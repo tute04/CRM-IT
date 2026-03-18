@@ -39,16 +39,30 @@ export default function AutopilotPage() {
   const fetchCampanas = async () => {
     try {
       setLoading(true);
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return;
+      console.log('Fetching campanas...');
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !userData?.user) {
+        console.error('No se pudo obtener el usuario', userError);
+        setLoading(false);
+        return;
+      }
 
-      const { data: negocioData } = await supabase
+      console.log('Usuario obtenido:', userData.user.id);
+
+      const { data: negocioData, error: negocioError } = await supabase
         .from('negocios')
         .select('id')
         .eq('owner_id', userData.user.id)
         .single();
         
-      if (!negocioData) return;
+      if (negocioError || !negocioData) {
+        console.error('No se pudo obtener el negocio del usuario', negocioError);
+        setLoading(false);
+        return;
+      }
+
+      console.log('Negocio obtenido:', negocioData.id);
 
       const { data, error } = await supabase
         .from('campanas_autopilot')
@@ -56,12 +70,17 @@ export default function AutopilotPage() {
         .eq('negocio_id', negocioData.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error supabase campanas:', error);
+        throw error;
+      }
+      
+      console.log('Campañas obtenidas:', data?.length);
       setCampanas(data || []);
-    } catch (err) {
-      console.error('Error fetching campanas:', err);
-      toast('Error al cargar campañas', 'error');
-    } finally {
+      setLoading(false);
+    } catch (err: any) {
+      console.error('Error catch fetching campanas:', err);
+      toast(err?.message || 'Error al cargar campañas', 'error');
       setLoading(false);
     }
   };
