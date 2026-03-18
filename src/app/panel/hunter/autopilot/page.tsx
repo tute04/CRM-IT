@@ -179,6 +179,13 @@ export default function AutopilotPage() {
                 const data = await res.json();
                 if (data.success) {
                   toast(`Cron finalizado: ${data.emails_enviados} emails enviados!`, 'success');
+                  if (data.emails_enviados === 0 && data.logs) {
+                    const motivos = data.logs.filter((l: string) => l.includes('❌') || l.includes('⚠️'));
+                    if (motivos.length > 0) {
+                       // Mostrar el primer motivo encontrado para que el usuario entienda
+                       setTimeout(() => toast(`Info: ${motivos[0]}`, 'info'), 1000);
+                    }
+                  }
                   fetchCampanas(); // Refrescar para ver cambios
                 } else {
                   toast(`Resultado: ${data.message || data.error}`, data.error ? 'error' : 'info');

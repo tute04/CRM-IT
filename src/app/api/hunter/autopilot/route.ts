@@ -36,9 +36,11 @@ export async function GET(req: Request) {
     }
 
     let emailsEnviados = 0;
+    const executionLogs: string[] = [];
 
     // 2. Procesar cada campaña
     for (const campana of campanas) {
+      executionLogs.push(`Iniciando campaña: ${campana.nombre_campana}`);
       // 2a. Buscar en Serper
       const serperResp = await fetch('https://google.serper.dev/search', {
         method: 'POST',
@@ -70,7 +72,10 @@ export async function GET(req: Request) {
         if (leadsProcesadosParaCampana >= campana.limite_diario) break;
 
         // Evitar duplicados
-        if (prevNames.includes(place.title)) continue;
+        if (prevNames.includes(place.title)) {
+          executionLogs.push(`⚠️ Saltando ${place.title}: Ya existe en base de datos.`);
+          continue;
+        }
 
         let emailEncontrado = "";
         let contenidoWeb = "";
@@ -88,12 +93,19 @@ export async function GET(req: Request) {
             }
             contenidoWeb = html.replace(/<[^>]*>?/gm, ' ').substring(0, 500).trim();
           } catch (e) {
-            // Ignorar errores de sitios caídos
+            executionLogs.push(`⚠️ Web inalcanzable: ${place.website}`);
           }
+        } else {
+          executionLogs.push(`❌ ${place.title} no tiene sitio web.`);
         }
 
         // SOLO SEGUIR SI ENCONTRAMOS EMAIL (El Autopilot necesita emails)
-        if (!emailEncontrado) continue;
+        if (!emailEncontrado) {
+          if (place.website && !executionLogs[executionLogs.length - 1].includes("inalcanzable")) {
+              executionLogs.push(`❌ No se encontró correo público en la web de ${place.title}.`);
+          }
+          continue;
+        }
 
         // 2c. Generar Email con OpenAI
         let subjectIA = `Mejoras para ${place.title}`;
@@ -153,11 +165,13 @@ export async function GET(req: Request) {
 
           if (error) {
              console.error("Resend Error al enviar a", emailEncontrado, error);
+             executionLogs.push(`❌ Falló envío por Resend para ${emailEncontrado}: ${error.message}`);
              continue; // Evita contarlo si rebotó
           }
 
           emailsEnviados++;
           leadsProcesadosParaCampana++;
+          executionLogs.push(`✅ Email enviado exitosamente a: ${emailEncontrado}`);
 
           // 2e. Guardar en Base de Datos como lead contactado
           await supabase.from('leads_hunter').insert([{
@@ -175,13 +189,13 @@ export async function GET(req: Request) {
             fecha_envio_email: new Date().toISOString()
           }]);
 
-        } catch (resendError) {
-          console.error("Resend Error Crítico:", resendError);
+        } catch (resendError: any) {
+          executionLogs.push(`❌ Excepción de Resend: ${resendError.message}`);
         }
       } 
     }
 
-    return NextResponse.json({ success: true, emails_enviados: emailsEnviados });
+    return NextResponse.json({ success: true, emails_enviados: emailsEnviados, logs: executionLogs });
 
   } catch (error: any) {
     console.error('Autopilot Cron Error:', error);
