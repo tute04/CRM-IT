@@ -13,11 +13,31 @@ import Pagination from '@/components/ui/Pagination';
 import EmptyState from '@/components/ui/EmptyState';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import InvoiceDropzone from '@/components/InvoiceDropzone';
+import { MobileCard, MobileCardRow, MobileCardActions } from '@/components/ui/MobileCard';
 
 const ITEMS_PER_PAGE = 20;
 type EstadoFilter = '' | 'cobrada' | 'pendiente' | 'cancelada';
 type SortKey = 'fecha' | 'monto' | 'detalle' | 'vendedor';
 type SortDir = 'asc' | 'desc';
+
+// ─── Íconos inline ─────────────────────────────────────────────
+const IconReceipt = () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
+    </svg>
+);
+const IconEdit = () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+);
+const IconTrash = () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </svg>
+);
 
 export default function VentasPage() {
     const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -47,7 +67,7 @@ export default function VentasPage() {
 
     const fetchData = useCallback(async () => {
         const [cRes, vRes] = await Promise.all([
-            supabase.from('clientes').select('*').order('nombre'),
+            supabase.from('clientes').select('*').is('deleted_at', null).order('nombre'),
             supabase.from('ventas').select('*').order('fecha', { ascending: false }),
         ]);
         if (cRes.data) setClientes(cRes.data as Cliente[]);
@@ -69,7 +89,6 @@ export default function VentasPage() {
     const allVendedores = [...new Set(ventas.map(v => v.vendedor).filter(Boolean))].sort();
     const getClienteName = (id: string) => clientes.find(c => c.id === id)?.nombre || 'Desconocido';
 
-    // Filter + Sort
     const filtered = ventas.filter(v => {
         const matchSearch = !search || v.detalle?.toLowerCase().includes(search.toLowerCase()) || getClienteName(v.cliente_id).toLowerCase().includes(search.toLowerCase());
         const matchEstado = !filterEstado || v.estado === filterEstado;
@@ -127,18 +146,39 @@ export default function VentasPage() {
     const handleExtracted = (data: any) => {
         setDropzoneOpen(false);
         setEditVenta(null);
+
+        let matchedClienteId = '';
+        let matchedClienteName = data.nombre_cliente || '';
+        let isNew = !!data.nombre_cliente;
+
+        // Búsqueda inteligente de cliente existente por aproximación
+        if (data.nombre_cliente && clientes.length > 0) {
+            // Normaliza ignorando mayúsculas, espacios, puntos, comas, etc. ("Avant S. A." == "avantsa")
+            const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const target = normalize(data.nombre_cliente);
+            const found = clientes.find(c => normalize(c.nombre) === target);
+
+            if (found) {
+                matchedClienteId = found.id;
+                matchedClienteName = found.nombre;
+                isNew = false; // ¡El cliente existe! No creamos uno nuevo.
+            }
+        }
+
         setForm({
-            cliente_id: '',
-            cliente_nombre: data.nombre_cliente || '',
+            cliente_id: matchedClienteId,
+            cliente_nombre: matchedClienteName,
             detalle: data.detalle || '',
             monto: String(data.monto || ''),
             vendedor: data.vendedor || '',
             fecha: data.fecha || new Date().toISOString().split('T')[0],
             estado: 'cobrada' as Venta['estado']
         });
-        setShowNewCliente(!!data.nombre_cliente);
-        setNewClienteNombre(data.nombre_cliente || '');
-        setNewClienteTelefono(data.telefono || '');
+        
+        setShowNewCliente(isNew);
+        setNewClienteNombre(isNew ? (data.nombre_cliente || '') : '');
+        setNewClienteTelefono(isNew ? (data.telefono || '') : '');
+        setClienteSearch(matchedClienteName);
         setModalOpen(true);
     };
 
@@ -149,7 +189,6 @@ export default function VentasPage() {
 
         let clienteId = form.cliente_id;
 
-        // Create inline cliente if needed
         if (showNewCliente && newClienteNombre.trim()) {
             const { data, error } = await supabase.from('clientes').insert([{
                 nombre: newClienteNombre.trim(),
@@ -180,7 +219,6 @@ export default function VentasPage() {
         } else {
             const { error } = await supabase.from('ventas').insert([payload]);
             if (error) { toast('Error: ' + error.message, 'error'); return; }
-            // Update ultimo_contacto
             await supabase.from('clientes').update({ ultimo_contacto: form.fecha }).eq('id', clienteId);
             toast('Venta registrada');
         }
@@ -188,9 +226,7 @@ export default function VentasPage() {
         fetchData();
     };
 
-    const confirmDelete = (id: string) => {
-        setDeleteConfirmId(id);
-    };
+    const confirmDelete = (id: string) => setDeleteConfirmId(id);
 
     const handleDelete = async () => {
         if (!deleteConfirmId) return;
@@ -224,6 +260,10 @@ export default function VentasPage() {
         return <Badge variant="danger">Cancelada</Badge>;
     };
 
+    const hasActiveFilters = !!(search || filterEstado || filterVendedor || filterFechaDesde || filterFechaHasta);
+    // ── TAREA 1: Empty State diferenciado ────────────────────────────────────
+    const isReallyEmpty = ventas.length === 0 && !hasActiveFilters;
+
     return (
         <div className="space-y-5 max-w-7xl mx-auto animate-fade-in">
             {/* Header */}
@@ -248,81 +288,159 @@ export default function VentasPage() {
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap items-center gap-2">
-                <div className="relative flex-1 min-w-[200px] max-w-xs">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-                    <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 outline-none focus:border-orange-400 transition-colors" />
-                </div>
-                <select value={filterEstado} onChange={e => setFilterEstado(e.target.value as EstadoFilter)} className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-zinc-600 dark:text-zinc-400 outline-none">
-                    <option value="">Todos los estados</option>
-                    <option value="cobrada">Cobrada</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="cancelada">Cancelada</option>
-                </select>
-                {allVendedores.length > 0 && (
-                    <select value={filterVendedor} onChange={e => setFilterVendedor(e.target.value)} className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-zinc-600 dark:text-zinc-400 outline-none">
-                        <option value="">Todos los vendedores</option>
-                        {allVendedores.map(v => <option key={v} value={v}>{v}</option>)}
-                    </select>
-                )}
-                <input type="date" value={filterFechaDesde} onChange={e => setFilterFechaDesde(e.target.value)} className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-zinc-600 dark:text-zinc-400 outline-none" />
-                <span className="text-zinc-400 text-xs">a</span>
-                <input type="date" value={filterFechaHasta} onChange={e => setFilterFechaHasta(e.target.value)} className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-zinc-600 dark:text-zinc-400 outline-none" />
-            </div>
-
-            {/* Table */}
-            {filtered.length === 0 ? (
-                <EmptyState title="Sin ventas" description={search ? 'No se encontraron resultados.' : 'Registrá tu primera venta.'} action={!search && <button onClick={openCreate} className="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition-colors">Registrar Venta</button>} />
+            {/* ── TAREA 1: Onboarding real (0 ventas, sin filtros) ── */}
+            {isReallyEmpty ? (
+                <EmptyState
+                    icon={<IconReceipt />}
+                    title="Aún no registraste ninguna venta"
+                    description="Registrá tu primera venta para empezar a ver tus estadísticas, cobros pendientes y el historial de cada cliente."
+                    action={
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
+                            <button onClick={openCreate} className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition-colors flex items-center gap-2">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                Registrar primera venta
+                            </button>
+                            <button onClick={() => setDropzoneOpen(true)} className="px-5 py-2.5 rounded-lg border border-orange-200 dark:border-orange-500/30 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 text-sm font-medium transition-colors flex items-center gap-2">
+                                Escanear factura
+                            </button>
+                        </div>
+                    }
+                />
             ) : (
-                <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-zinc-100 dark:border-zinc-800">
-                                    <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400 cursor-pointer hover:text-zinc-600" onClick={() => toggleSort('fecha')}>Fecha<SortIcon k="fecha" /></th>
-                                    <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400">Cliente</th>
-                                    <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400 cursor-pointer hover:text-zinc-600" onClick={() => toggleSort('detalle')}>Detalle<SortIcon k="detalle" /></th>
-                                    <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400 cursor-pointer hover:text-zinc-600" onClick={() => toggleSort('monto')}>Monto<SortIcon k="monto" /></th>
-                                    <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400 cursor-pointer hover:text-zinc-600" onClick={() => toggleSort('vendedor')}>Vendedor<SortIcon k="vendedor" /></th>
-                                    <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400">Estado</th>
-                                    <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                <>
+                    {/* Filters */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="relative flex-1 min-w-[200px] max-w-xs">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 outline-none focus:border-orange-400 transition-colors" />
+                        </div>
+                        <select value={filterEstado} onChange={e => setFilterEstado(e.target.value as EstadoFilter)} className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-zinc-600 dark:text-zinc-400 outline-none">
+                            <option value="">Todos los estados</option>
+                            <option value="cobrada">Cobrada</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="cancelada">Cancelada</option>
+                        </select>
+                        {allVendedores.length > 0 && (
+                            <select value={filterVendedor} onChange={e => setFilterVendedor(e.target.value)} className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-zinc-600 dark:text-zinc-400 outline-none">
+                                <option value="">Todos los vendedores</option>
+                                {allVendedores.map(v => <option key={v} value={v}>{v}</option>)}
+                            </select>
+                        )}
+                        <input type="date" value={filterFechaDesde} onChange={e => setFilterFechaDesde(e.target.value)} className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-zinc-600 dark:text-zinc-400 outline-none" />
+                        <span className="text-zinc-400 text-xs">a</span>
+                        <input type="date" value={filterFechaHasta} onChange={e => setFilterFechaHasta(e.target.value)} className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-zinc-600 dark:text-zinc-400 outline-none" />
+                    </div>
+
+                    {/* Sin resultados de filtro */}
+                    {filtered.length === 0 ? (
+                        <EmptyState
+                            title="Sin resultados"
+                            description="No se encontraron ventas con los filtros actuales."
+                            action={
+                                <button onClick={() => { setSearch(''); setFilterEstado(''); setFilterVendedor(''); setFilterFechaDesde(''); setFilterFechaHasta(''); }} className="px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                                    Limpiar filtros
+                                </button>
+                            }
+                        />
+                    ) : (
+                        <>
+                            {/* ── TAREA 2: Vista Desktop — oculta en mobile ── */}
+                            <div className="hidden md:block bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b border-zinc-100 dark:border-zinc-800">
+                                                <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400 cursor-pointer hover:text-zinc-600" onClick={() => toggleSort('fecha')}>Fecha<SortIcon k="fecha" /></th>
+                                                <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400">Cliente</th>
+                                                <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400 cursor-pointer hover:text-zinc-600" onClick={() => toggleSort('detalle')}>Detalle<SortIcon k="detalle" /></th>
+                                                <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400 cursor-pointer hover:text-zinc-600" onClick={() => toggleSort('monto')}>Monto<SortIcon k="monto" /></th>
+                                                <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400 cursor-pointer hover:text-zinc-600" onClick={() => toggleSort('vendedor')}>Vendedor<SortIcon k="vendedor" /></th>
+                                                <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400">Estado</th>
+                                                <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {paginated.map(v => (
+                                                <tr key={v.id} className="border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
+                                                    <td className="px-5 py-3.5 text-sm text-zinc-500 dark:text-zinc-400 whitespace-nowrap">{formatDate(v.fecha)}</td>
+                                                    <td className="px-5 py-3.5 text-sm font-medium text-zinc-900 dark:text-white truncate max-w-[140px]">{getClienteName(v.cliente_id)}</td>
+                                                    <td className="px-5 py-3.5 text-sm text-zinc-600 dark:text-zinc-400 truncate max-w-[200px]">{v.detalle}</td>
+                                                    <td className="px-5 py-3.5 text-sm font-bold text-zinc-900 dark:text-white">{formatCurrency(v.monto)}</td>
+                                                    <td className="px-5 py-3.5 text-sm text-zinc-500 dark:text-zinc-400">{v.vendedor || '—'}</td>
+                                                    <td className="px-5 py-3.5">{estadoBadge(v.estado || 'cobrada')}</td>
+                                                    <td className="px-5 py-3.5">
+                                                        <div className="flex items-center gap-1">
+                                                            <button onClick={() => openEdit(v)} className="w-7 h-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors">
+                                                                <IconEdit />
+                                                            </button>
+                                                            <button onClick={() => confirmDelete(v.id)} className="w-7 h-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
+                                                                <IconTrash />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div className="px-5 pb-3">
+                                    <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+                                </div>
+                            </div>
+
+                            {/* ── TAREA 2: Vista Mobile (Cards) — oculta en md+ ── */}
+                            <div className="md:hidden space-y-3">
                                 {paginated.map(v => (
-                                    <tr key={v.id} className="border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
-                                        <td className="px-5 py-3.5 text-sm text-zinc-500 dark:text-zinc-400 whitespace-nowrap">{formatDate(v.fecha)}</td>
-                                        <td className="px-5 py-3.5 text-sm font-medium text-zinc-900 dark:text-white truncate max-w-[140px]">{getClienteName(v.cliente_id)}</td>
-                                        <td className="px-5 py-3.5 text-sm text-zinc-600 dark:text-zinc-400 truncate max-w-[200px]">{v.detalle}</td>
-                                        <td className="px-5 py-3.5 text-sm font-bold text-zinc-900 dark:text-white">{formatCurrency(v.monto)}</td>
-                                        <td className="px-5 py-3.5 text-sm text-zinc-500 dark:text-zinc-400">{v.vendedor || '—'}</td>
-                                        <td className="px-5 py-3.5">{estadoBadge(v.estado || 'cobrada')}</td>
-                                        <td className="px-5 py-3.5">
-                                            <div className="flex items-center gap-1">
-                                                <button onClick={() => openEdit(v)} className="w-7 h-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors">
-                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                                                </button>
-                                                <button onClick={() => confirmDelete(v.id)} className="w-7 h-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
-                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                                                </button>
+                                    <MobileCard key={v.id}>
+                                        {/* Cabecera */}
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{getClienteName(v.cliente_id)}</p>
+                                                <p className="text-xs text-zinc-400 truncate mt-0.5">{v.detalle}</p>
                                             </div>
-                                        </td>
-                                    </tr>
+                                            {estadoBadge(v.estado || 'cobrada')}
+                                        </div>
+
+                                        <MobileCardRow label="Fecha">
+                                            <span>{formatDate(v.fecha)}</span>
+                                        </MobileCardRow>
+                                        <MobileCardRow label="Monto">
+                                            <span className="font-bold text-zinc-900 dark:text-white text-base">{formatCurrency(v.monto)}</span>
+                                        </MobileCardRow>
+                                        {v.vendedor && (
+                                            <MobileCardRow label="Vendedor">
+                                                <span>{v.vendedor}</span>
+                                            </MobileCardRow>
+                                        )}
+
+                                        <MobileCardActions>
+                                            <button
+                                                onClick={() => openEdit(v)}
+                                                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                                            >
+                                                <IconEdit /> Editar
+                                            </button>
+                                            <button
+                                                onClick={() => confirmDelete(v.id)}
+                                                className="flex items-center justify-center p-2.5 rounded-lg border border-red-200 dark:border-red-500/20 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                            >
+                                                <IconTrash />
+                                            </button>
+                                        </MobileCardActions>
+                                    </MobileCard>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div className="px-5 pb-3">
-                        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-                    </div>
-                </div>
+                                <div className="pb-2">
+                                    <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </>
             )}
 
             {/* Create/Edit Modal */}
             <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editVenta ? 'Editar Venta' : 'Nueva Venta'}>
                 <div className="space-y-4">
-                    {/* Cliente selector */}
                     <div>
                         <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">Cliente *</label>
                         {!showNewCliente ? (

@@ -9,10 +9,16 @@ export const metadata: Metadata = {
   description: 'Gestioná tus ventas, clientes y facturas automáticamente con IA. El CRM más simple diseñado para PyMEs en Argentina.',
   keywords: ['CRM Argentina', 'gestión de ventas', 'escaneo de facturas IA', 'pymes', 'control de stock', 'ITrium'],
   authors: [{ name: 'ITrium Team' }],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'ITrium CRM',
+  },
   openGraph: {
     title: 'ITrium | El CRM que lee tus facturas con IA',
     description: 'Dejá de cargar datos manualmente. Organizá tu negocio con ITirium.',
-    url: 'https://itirium-crm.vercel.app', 
+    url: 'https://itirium-crm.vercel.app',
     siteName: 'ITirium',
     images: [
       {
@@ -27,8 +33,10 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/favicon.svg',
+    apple: '/icon-192.png',
   },
 };
+
 
 export default function RootLayout({
   children,

@@ -124,58 +124,6 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* 4. LEAD HUNTER HIGHLIGHT (NUEVA SECCIÓN CRÍTICA) */}
-        <section id="hunter" className="py-24 relative overflow-hidden">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              <div className="relative order-2 lg:order-1">
-                <div className="absolute -top-10 -left-10 w-40 h-40 bg-orange-500/20 blur-[80px] rounded-full" />
-                <BrowserFrame url="app.itrium.com/panel/hunter" className="h-[450px] shadow-2xl shadow-orange-500/10 border border-orange-500/20">
-                  <Image 
-                    src="/screenshots/lead_hunter.png" 
-                    alt="Lead Hunter AI Radar" 
-                    fill 
-                    className="object-cover" 
-                    unoptimized 
-                  />
-                </BrowserFrame>
-              </div>
-              <div className="order-1 lg:order-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 text-orange-500 text-sm font-bold mb-6">
-                  ✨ La Joya de la Corona
-                </div>
-                <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">
-                  Tu CRM no solo guarda clientes, <span className="text-orange-500">los busca por vos.</span>
-                </h2>
-                <p className="text-xl text-zinc-400 mb-8 leading-relaxed">
-                  Activá el <strong>Lead Hunter AI</strong> y dejá que nuestro radar escanee tu zona para encontrar nuevos prospectos. Genera propuestas personalizadas automáticamente.
-                </p>
-                <div className="space-y-4">
-                  {[
-                    "Escaneo inteligente por ciudades y rubros.",
-                    "Generación de pitches de venta personalizados con IA.",
-                    "Envío directo a WhatsApp con un solo click.",
-                    "Scoring automático de prospectos rentables."
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-3 text-zinc-300">
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
-                      </div>
-                      <span className="font-medium">{item}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-10">
-                  <Link href="/registro" className="inline-flex items-center gap-2 group text-orange-500 font-bold text-lg">
-                    Ver el Lead Hunter en acción
-                    <svg className="group-hover:translate-x-1 transition-transform" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* 5. FEATURES CON SCREENSHOTS */}
         <section id="caracteristicas" className="py-24 sm:py-32 overflow-hidden bg-[#0c0c0c] scroll-mt-16">
           <div className="max-w-7xl mx-auto px-6">

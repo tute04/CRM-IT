@@ -7,6 +7,7 @@ import BottomNav from '@/components/layout/BottomNav';
 import Header from '@/components/layout/Header';
 import { createClient } from '@/utils/supabase-client';
 import { useNegocio } from '@/contexts/NegocioContext';
+import OnboardingModal from '@/components/ui/OnboardingModal';
 
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -64,6 +65,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
                 </div>
                 <BottomNav />
             </div>
+            <OnboardingModal />
         </div>
     );
 }

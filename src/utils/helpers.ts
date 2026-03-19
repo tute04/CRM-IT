@@ -1,4 +1,5 @@
-export function formatCurrency(amount: number, currency = 'ARS'): string {
+export function formatCurrency(amount: number | null | undefined, currency = 'ARS'): string {
+    if (amount === null || amount === undefined || isNaN(amount)) return '$0';
     return new Intl.NumberFormat('es-AR', {
         style: 'currency',
         currency,
@@ -7,23 +8,31 @@ export function formatCurrency(amount: number, currency = 'ARS'): string {
     }).format(amount);
 }
 
-export function formatDate(date: string): string {
+export function formatDate(date: string | null | undefined): string {
+    if (!date) return '—';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '—';
     return new Intl.DateTimeFormat('es-AR', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
-    }).format(new Date(date));
+    }).format(d);
 }
 
-export function formatDateShort(date: string): string {
+export function formatDateShort(date: string | null | undefined): string {
+    if (!date) return '—';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '—';
     return new Intl.DateTimeFormat('es-AR', {
         day: 'numeric',
         month: 'short',
-    }).format(new Date(date));
+    }).format(d);
 }
 
-export function daysSince(date: string): number {
+export function daysSince(date: string | null | undefined): number {
+    if (!date) return 0;
     const d = new Date(date);
+    if (isNaN(d.getTime())) return 0;
     const now = new Date();
     return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
 }
@@ -47,8 +56,10 @@ export function classNames(...classes: (string | boolean | undefined | null)[]):
     return classes.filter(Boolean).join(' ');
 }
 
-export function whatsappUrl(phone: string, text?: string): string {
+export function whatsappUrl(phone: string | null | undefined, text?: string): string {
+    if (!phone) return '#';
     const cleanPhone = phone.replace(/\D/g, '');
+    if (!cleanPhone) return '#';
     const base = `https://wa.me/${cleanPhone}`;
     return text ? `${base}?text=${encodeURIComponent(text)}` : base;
 }

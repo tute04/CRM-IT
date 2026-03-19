@@ -29,8 +29,9 @@ export default function AlertasPage() {
     const { toast } = useToast();
 
     const fetchData = useCallback(async () => {
+        setLoading(true);
         const [cRes, vRes, rRes, crRes] = await Promise.all([
-            supabase.from('clientes').select('*'),
+            supabase.from('clientes').select('*').is('deleted_at', null),  // excluye archivados
             supabase.from('ventas').select('*'),
             supabase.from('recordatorios').select('*, cliente:clientes(nombre)').eq('completado', false).order('fecha', { ascending: true }),
             supabase.from('recordatorios').select('*, cliente:clientes(nombre)').eq('completado', true).order('created_at', { ascending: false }).limit(20),

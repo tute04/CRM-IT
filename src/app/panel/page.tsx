@@ -6,7 +6,7 @@ import { useNegocio } from '@/contexts/NegocioContext';
 import { Cliente, Venta, Recordatorio, Producto } from '@/types';
 import { formatCurrency, getWeekStart, getMonthStart, getYearStart } from '@/utils/helpers';
 import { SkeletonCard } from '@/components/ui/Skeleton';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from 'recharts';
 import Link from 'next/link';
 
 type TimeFilter = 'SEMANA' | 'MES' | 'AÑO';
@@ -23,16 +23,17 @@ export default function DashboardPage() {
 
     const fetchData = useCallback(async () => {
         const [cRes, vRes, rRes, pRes] = await Promise.all([
-            supabase.from('clientes').select('*'),
+            supabase.from('clientes').select('*').is('deleted_at', null),
             supabase.from('ventas').select('*').order('fecha', { ascending: false }),
             supabase.from('recordatorios').select('*, cliente:clientes(nombre)').eq('completado', false).order('fecha', { ascending: true }).limit(10),
-            supabase.from('productos').select('*').lte('stock_actual', 'stock_minimo'), // We cannot directly compare two columns in supabase-js select, better to fetch all or use a view/rpc. Let's fetch all products and filter in js for now since dataset is small or use filter.
+            supabase.from('productos').select('*').is('deleted_at', null), // filtramos bajo stock en JS
         ]);
         if (cRes.data) setClientes(cRes.data as Cliente[]);
         if (vRes.data) setVentas(vRes.data as Venta[]);
         if (rRes.data) setRecordatorios(rRes.data as Recordatorio[]);
         if (pRes.data) {
             const p = pRes.data as Producto[];
+            // .lte() en supabase-js no compara dos columnas, hay que filtrarlo en JS
             setProductosBajoStock(p.filter(x => x.stock_actual <= x.stock_minimo));
         }
         setLoading(false);
@@ -197,21 +198,37 @@ export default function DashboardPage() {
 
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-                {/* Bar Chart */}
+                {/* Area Chart */}
                 <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5">
                     <h3 className="text-sm font-bold text-zinc-900 dark:text-white mb-4">Facturación · Últimos 30 días</h3>
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData}>
-                                <XAxis dataKey="fecha" tickFormatter={(v: string) => v.slice(8)} tick={{ fontSize: 10, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fontSize: 10, fill: '#a1a1aa' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
+                            <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                                <XAxis dataKey="fecha" tickFormatter={(v: string) => v.slice(8)} tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} interval={4} />
+                                <YAxis tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} width={40} />
                                 <Tooltip
-                                    contentStyle={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', fontSize: '12px', color: '#fff' }}
-                                    formatter={(value: unknown) => [formatCurrency(value as number), 'Total']}
-                                    labelFormatter={(label: unknown) => `Día ${String(label).slice(8)}`}
+                                    contentStyle={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', fontSize: '12px', color: '#fff' }}
+                                    formatter={(value: unknown) => [formatCurrency(value as number), 'Facturado']}
+                                    labelFormatter={(label: unknown) => `${String(label)}`}
+                                    cursor={{ stroke: '#f97316', strokeWidth: 1, strokeDasharray: '4 2' }}
                                 />
-                                <Bar dataKey="total" fill="#f97316" radius={[4, 4, 0, 0]} />
-                            </BarChart>
+                                <Area
+                                    type="monotone"
+                                    dataKey="total"
+                                    stroke="#f97316"
+                                    strokeWidth={2.5}
+                                    fill="url(#colorTotal)"
+                                    dot={false}
+                                    activeDot={{ r: 5, fill: '#f97316', strokeWidth: 2, stroke: '#fff' }}
+                                />
+                            </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>

@@ -10,6 +10,7 @@ export interface Cliente {
   rubro?: string;
   negocio_id?: string;
   created_at?: string;
+  deleted_at?: string | null; // soft delete
 }
 
 export interface Venta {
@@ -91,4 +92,5 @@ export interface Producto {
   unidad: 'unidad' | 'kg' | 'm' | 'lt' | string;
   created_at?: string;
   updated_at?: string;
+  deleted_at?: string | null; // soft delete
 }
