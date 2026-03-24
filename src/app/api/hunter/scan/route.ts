@@ -78,12 +78,11 @@ export async function POST(req: Request) {
         }
       }
 
-      // MENSAJE DE RESPALDO (Por si la IA falla)
-      let propuestaia = `Hola! Cómo estás? 👋 Vi tu negocio *${place.title}* en Google Maps y me pareció excelente. 
+      let propuestaia = `Hola! Soy Mateo, estudio Ingeniería Industrial en la UTN. Te escribo cortito: le armé una app a mi viejo para su negocio de gomas porque el tema de cargar remitos, ventas y actualizar precios a mano era un caos. Funcionó re bien y la usa todos los días desde el celu.
 
-Te escribo porque creamos **ITirium**, un CRM diseñado acá en Argentina para ayudar a negocios como el tuyo a organizar sus ventas y clientes de forma fácil.
+Como vi que estás en un rubro parecido, me gustaría mostrártela gratis (tiene 14 días prestados) para ver si a vos te soluciona el mismo problema y de paso me das feedback.
 
-Te invito a que lo pruebes gratis por 14 días entrando acá: https://itirium-crm.vercel.app 🚀`;
+¿Te sirve si te paso un videíto de 1 minuto mostrando cómo la usa mi viejo en el mostrador?`;
 
       let score = 5;
       let scoreMotivo = "Lead de búsqueda manual.";
@@ -102,14 +101,15 @@ Te invito a que lo pruebes gratis por 14 días entrando acá: https://itirium-cr
               response_format: { type: "json_object" },
               messages: [{
                 role: "system",
-                content: `Eres un experto vendedor argentino de ITirium CRM (itirium-crm.vercel.app). 
-                Escribe un mensaje corto de WhatsApp para el dueño de un negocio. 
-                Adaptá el mensaje a este tono pedido por el usuario: "${tono}".
-                USA TONO ARGENTINO (Che, vi tu negocio, probalo, voseo), pero manteniendo la formalidad si se requiere.
-                Regla de Reseñas: Si el rating es menor a 4.0, mencioná sutilmente que el CRM los ayuda a dar mejor atención y mejorar la reputación. Si es 4.5 o más, felicitalos por la excelente puntuación.
-                Regla de Web: Si no tienen web, mencioná que el CRM les permite tener una presencia digital.
-                INCLUYE SIEMPRE el link itirium-crm.vercel.app y menciona los 14 DÍAS GRATIS.
-                Analiza el teléfono provisto: en Argentina, si empieza con cód. de área + 15 o si la longitud total con código de área es de 10 dígitos (ej 351xxxxxxx), es celular. Si tiene guiones medios (422-3312) o menos dígitos, suele ser fijo. Devuelve boolean en 'es_celular'.
+                content: `Asume el rol de "Mateo", un estudiante de Ingeniería Industrial en la UTN (Córdoba, Argentina). Estás prospectando por WhatsApp.
+                Contexto: Creaste "ITirium", una app web para tu papá (vendedor independiente de gomas) porque "el tema de cargar remitos y actualizar precios a mano era un caos". Ahora quieres que otros negocios parecidos la prueben gratis 14 días.
+                Objetivo: Escribir un mensaje de WhatsApp CORTO, al hueso del problema (anotar ventas, remitos, caos de precios). 
+                Reglas Vitales:
+                1. Presentate rápido: "Hola! Soy Mateo, estudio Ingeniería Industrial en la UTN...". 
+                2. Nombra tu caso de éxito (tu papá y lo caótico de las ventas/remitos/precios a mano).
+                3. NO uses textos genéricos como "ví tu negocio en maps y me pareció excelente". Reemplazá esto vinculando sutilmente su rubro con el de tu papá.
+                4. EL CIERRE ES CLAVE: NO mandes enlaces ni pidas que se registren. CIERRA SIEMPRE con la pregunta textual: "¿Te sirve si te paso un videíto de 1 minuto mostrando cómo la usa mi viejo en el mostrador?".
+                5. Tono informal de Córdoba, relajado, sin sonar a marketero.
                 Devuelve JSON: {"propuesta": "...", "score": 1-10, "motivo": "...", "es_celular": true|false}`
               }, {
                 role: "user",
