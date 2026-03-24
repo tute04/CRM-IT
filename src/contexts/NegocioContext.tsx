@@ -42,6 +42,9 @@ export function NegocioProvider({ children }: { children: React.ReactNode }) {
                 console.error('Error fetching negocio:', error);
                 setNegocio(null);
             } else {
+                if (user.email === 'matebonavia@gmail.com') {
+                    data.plan = 'activo';
+                }
                 setNegocio(data as Negocio);
             }
         } catch (err) {

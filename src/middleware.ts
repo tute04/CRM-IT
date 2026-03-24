@@ -56,7 +56,9 @@ export async function middleware(request: NextRequest) {
     }
 
     // If logged in, check plan status for protected routes
-    if (user && !isPublicRoute && pathname !== '/suscripcion-vencida' && pathname !== '/suscripcion') {
+    const isAdmin = user?.email === 'matebonavia@gmail.com';
+    const isExemptFromBlock = pathname === '/suscripcion-vencida' || pathname === '/suscripcion' || pathname.startsWith('/api/pagos') || isAdmin;
+    if (user && !isPublicRoute && !isExemptFromBlock) {
         const { data: negocio } = await supabase
             .from('negocios')
             .select('plan, trial_ends_at')

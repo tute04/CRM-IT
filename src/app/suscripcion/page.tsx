@@ -26,7 +26,15 @@ export default function SuscripcionPage() {
                 },
                 body: JSON.stringify({ negocio_id: negocio?.id }),
             });
-            const data = await res.json();
+            let data;
+            const contentType = res.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                data = await res.json();
+            } else {
+                const text = await res.text();
+                throw new Error(`Respuesta inválida del servidor (Status: ${res.status}). Por favor, recargue la página y vuelva a intentarlo.`);
+            }
+
             if (!res.ok) throw new Error(data.error || 'Error al crear el pago');
             window.location.href = data.init_point;
         } catch (err: any) {
