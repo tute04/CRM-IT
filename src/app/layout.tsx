@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { NegocioProvider } from '@/contexts/NegocioContext';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 import Analytics from '@/components/Analytics';
 
 export const metadata: Metadata = {
@@ -50,6 +51,7 @@ export default function RootLayout({
           <ToastProvider>
             {children}
             <Analytics />
+            <VercelAnalytics />
           </ToastProvider>
         </NegocioProvider>
       </body>
